@@ -73,14 +73,19 @@ export class SessionManager {
    * @returns The new session ID
    */
   public createSession(request: vscode.ChatRequest): string {
-    const sessionId = request.requestId;
+    const sessionId = `session-${Date.now()}`;
     const mode = this._modeManager.currentMode;
+    
+    const sessionMessage: SessionMessage = {
+      text: request.prompt,
+      timestamp: Date.now()
+    };
     
     const session: Session = {
       id: sessionId,
       startTime: Date.now(),
       mode,
-      messages: [request]
+      messages: [sessionMessage]
     };
     
     this._activeSessions.set(sessionId, session);
@@ -92,16 +97,30 @@ export class SessionManager {
   /**
    * Add a message to an existing session.
    * @param sessionId The session ID
-   * @param request The chat request
+   * @param text The message text
+   * @param participant Optional participant ID
+   * @param command Optional command
    * @returns True if the message was added, false otherwise
    */
-  public addMessage(sessionId: string, request: vscode.ChatRequestTelemetry): boolean {
+  public addMessage(
+    sessionId: string, 
+    text: string, 
+    participant?: string, 
+    command?: string
+  ): boolean {
     const session = this._activeSessions.get(sessionId);
     if (!session) {
       return false;
     }
     
-    session.messages.push(request);
+    const message: SessionMessage = {
+      text,
+      participant,
+      command,
+      timestamp: Date.now()
+    };
+    
+    session.messages.push(message);
     return true;
   }
   
@@ -138,7 +157,7 @@ export class SessionManager {
     
     // Extract user messages for summarization
     const userMessages = messages
-      .filter(msg => msg.command === "" && msg.participant === undefined)
+      .filter(msg => !msg.command && !msg.participant)
       .map(msg => msg.text);
     
     if (userMessages.length === 0) {

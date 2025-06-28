@@ -10,17 +10,10 @@ export class ModeManager {
   private static _instance: ModeManager | null = null;
   private _currentMode: Mode;
   private _memoryManager: MemoryManager;
-  private _modeStatusBarItem: vscode.StatusBarItem;
   
   private constructor(memoryManager: MemoryManager) {
     this._currentMode = MODES.ask; // Default mode
     this._memoryManager = memoryManager;
-    this._modeStatusBarItem = vscode.window.createStatusBarItem(
-      vscode.StatusBarAlignment.Left,
-      100
-    );
-    this._updateStatusBar();
-    this._modeStatusBarItem.show();
   }
   
   /**
@@ -54,7 +47,6 @@ export class ModeManager {
     }
     
     this._currentMode = mode;
-    this._updateStatusBar();
     return true;
   }
   
@@ -99,12 +91,5 @@ export class ModeManager {
     return enhancedPrompt;
   }
   
-  /**
-   * Updates the mode status bar item.
-   */
-  private _updateStatusBar(): void {
-    this._modeStatusBarItem.text = `$(beaker) ${this._currentMode.name} Mode`;
-    this._modeStatusBarItem.tooltip = `Memory Bank: ${this._currentMode.description}`;
-    this._modeStatusBarItem.command = "memoryBank.switchMode";
-  }
+
 }

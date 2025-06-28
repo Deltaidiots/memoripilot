@@ -2,6 +2,8 @@ import * as vscode from "vscode";
 import { FILE_TEMPLATES } from "./FileTemplates";
 import { SummaryStrategy } from "./strategies/SummaryStrategy";
 import { LlmSummary } from "./strategies/LlmSummary";
+import { FileWatcher, MemoryFileChangeEvent } from "./FileWatcher";
+import { EventEmitter } from "events";
 
 export type MemoryFile = keyof typeof FILE_TEMPLATES;
 
@@ -11,16 +13,33 @@ export interface SummarisedMemory {
 }
 
 /**
+ * Event that is fired when memory content changes.
+ */
+export interface MemoryContentChangeEvent {
+  file: MemoryFile;
+  summary: string;
+  timestamp: number;
+}
+
+/**
  * Singleton responsible for CRUD on memory-bank files.
  */
-export class MemoryManager {
+export class MemoryManager extends EventEmitter {
   private static _instance: MemoryManager | null = null;
   private readonly workspace: vscode.WorkspaceFolder;
   private readonly summariser: SummaryStrategy;
+  private readonly watcher: FileWatcher;
+  private fileCache: Map<string, string> = new Map();
+  private summaryCache: Map<string, string> = new Map();
 
   private constructor(workspace: vscode.WorkspaceFolder) {
+    super();
     this.workspace = workspace;
     this.summariser = new LlmSummary();
+    this.watcher = FileWatcher.getInstance(workspace);
+    
+    // Listen for file change events
+    this.watcher.on("fileChanged", this.handleFileChange.bind(this));
   }
 
   public static getInstance(
@@ -39,16 +58,30 @@ export class MemoryManager {
   public async initialise(): Promise<void> {
     const rootUri = this.pathUri("memory-bank");
     await vscode.workspace.fs.createDirectory(rootUri);
+    
+    // Create each file if it doesn't exist
     await Promise.all(
       Object.entries(FILE_TEMPLATES).map(async ([path, template]) => {
         const fileUri = this.pathUri(path);
         try {
           await vscode.workspace.fs.stat(fileUri);
+          
+          // File exists, read it to cache
+          const content = await this.readFile(path as MemoryFile);
+          this.fileCache.set(path, content);
         } catch {
+          // File doesn't exist, create it
           await vscode.workspace.fs.writeFile(fileUri, Buffer.from(template));
+          this.fileCache.set(path, template);
         }
       })
     );
+    
+    // Start watching files
+    this.startWatching();
+    
+    // Log for debugging
+    console.log("Memory Bank initialized successfully");
   }
 
   /**
@@ -85,12 +118,85 @@ export class MemoryManager {
     );
   }
 
+  /**
+   * Handles file change events from the FileWatcher.
+   * @param event The file change event
+   */
+  private async handleFileChange(event: MemoryFileChangeEvent): Promise<void> {
+    const { file, timestamp } = event;
+    
+    try {
+      // Update the file cache
+      const content = await this.readFile(file);
+      this.fileCache.set(file, content);
+      
+      // Generate a new summary
+      const summary = await this.summariser.summarise(content, 100); // Use a smaller budget for realtime updates
+      this.summaryCache.set(file, summary);
+      
+      // Emit a change event
+      this.emit("contentChanged", {
+        file,
+        summary,
+        timestamp
+      } as MemoryContentChangeEvent);
+      
+      console.log(`Updated cache for ${file}`);
+    } catch (error) {
+      console.error(`Error handling file change for ${file}:`, error);
+    }
+  }
+
+  /**
+   * Start watching all memory files.
+   */
+  public startWatching(): void {
+    const files = Object.keys(FILE_TEMPLATES) as MemoryFile[];
+    this.watcher.watchFiles(files);
+  }
+
+  /**
+   * Stop watching memory files.
+   */
+  public stopWatching(): void {
+    this.watcher.dispose();
+  }
+
+  /**
+   * Get the content of a memory file from cache or disk.
+   * @param path The memory file path
+   * @returns The file content
+   */
+  public async getFileContent(path: MemoryFile): Promise<string> {
+    // Use cache if available
+    const cached = this.fileCache.get(path);
+    if (cached) {
+      return cached;
+    }
+    
+    // Read from disk and update cache
+    const content = await this.readFile(path);
+    this.fileCache.set(path, content);
+    return content;
+  }
+
   // ---------------- private helpers ----------------
   private pathUri(rel: string): vscode.Uri {
     return vscode.Uri.joinPath(this.workspace.uri, rel);
   }
-  private async readFile(path: MemoryFile): Promise<string> {
-    const bytes = await vscode.workspace.fs.readFile(this.pathUri(path));
-    return Buffer.from(bytes).toString("utf8");
+  
+  /**
+   * Read a memory file from disk.
+   * @param path The memory file path
+   * @returns The file content
+   */
+  public async readFile(path: MemoryFile): Promise<string> {
+    try {
+      const bytes = await vscode.workspace.fs.readFile(this.pathUri(path));
+      return Buffer.from(bytes).toString("utf8");
+    } catch (err) {
+      console.error(`Error reading file ${path}:`, err);
+      return ""; // Return empty string if file doesn't exist
+    }
   }
 }

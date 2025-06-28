@@ -23,6 +23,14 @@
         "description": "GitHub Copilot with project memory"
       }
     ],
+    "keybindings": [
+      {
+        "command": "memoryBank.processCommand",
+        "key": "ctrl+alt+m",
+        "mac": "cmd+alt+m",
+        "when": "editorTextFocus || viewFocus"
+      }
+    ],
     "commands": [
       {
         "command": "memoryBank.test",
@@ -39,6 +47,26 @@
       {
         "command": "memoryBank.showMemory",
         "title": "Memory Bank: Show Memory"
+      },
+      {
+        "command": "memoryBank.updateMemoryBank",
+        "title": "Memory Bank: Update Memory Bank (UMB)"
+      },
+      {
+        "command": "memoryBank.selectMode",
+        "title": "Memory Bank: Select Mode"
+      },
+      {
+        "command": "memoryBank.copilotContext",
+        "title": "Memory Bank: Copy Context to GitHub Copilot"
+      },
+      {
+        "command": "memoryBank.processCommand",
+        "title": "Memory Bank: Run Command"
+      },
+      {
+        "command": "memoryBank.registerCopilotCommand",
+        "title": "Memory Bank: Copy Command for GitHub Copilot Chat"
       }
     ],
     "chatParticipantCommands": [
@@ -58,6 +86,12 @@
         "command": "memoryBank.showMemory",
         "name": "show-memory",
         "description": "Show a memory bank file",
+        "when": "chatRequestId =~ /memory-bank/"
+      },
+      {
+        "command": "memoryBank.updateMemoryBank",
+        "name": "update-memory-bank",
+        "description": "Manually update the memory bank (UMB)",
         "when": "chatRequestId =~ /memory-bank/"
       }
     ]
