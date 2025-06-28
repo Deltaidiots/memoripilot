@@ -1,0 +1,92 @@
+{
+  "name": "memory-bank-copilot",
+  "displayName": "memory-bank-copilot",
+  "description": "Enhance GitHub Copilot with persistent memory and context",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.101.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onChat:memory",
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "chatParticipants": [
+      {
+        "id": "memory-bank",
+        "name": "memory",
+        "fullName": "Memory Bank",
+        "description": "GitHub Copilot with project memory"
+      }
+    ],
+    "commands": [
+      {
+        "command": "memoryBank.test",
+        "title": "Memory Bank: Test Activation"
+      },
+      {
+        "command": "memoryBank.appendDecision",
+        "title": "Memory Bank: Append Decision"
+      },
+      {
+        "command": "memoryBank.setActiveContext",
+        "title": "Memory Bank: Set Active Context"
+      },
+      {
+        "command": "memoryBank.showMemory",
+        "title": "Memory Bank: Show Memory"
+      }
+    ],
+    "chatParticipantCommands": [
+      {
+        "command": "memoryBank.appendDecision",
+        "name": "append-decision",
+        "description": "Log a new decision to decisionLog.md",
+        "when": "chatRequestId =~ /memory-bank/"
+      },
+      {
+        "command": "memoryBank.setActiveContext",
+        "name": "active-context",
+        "description": "Set your current working focus",
+        "when": "chatRequestId =~ /memory-bank/"
+      },
+      {
+        "command": "memoryBank.showMemory",
+        "name": "show-memory",
+        "description": "Show a memory bank file",
+        "when": "chatRequestId =~ /memory-bank/"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "npm run check-types && npm run lint && node esbuild.js",
+    "watch": "npm-run-all -p watch:*",
+    "watch:esbuild": "node esbuild.js --watch",
+    "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+    "package": "npm run check-types && npm run lint && node esbuild.js --production",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "check-types": "tsc --noEmit",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.101.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "20.x",
+    "@typescript-eslint/eslint-plugin": "^8.31.1",
+    "@typescript-eslint/parser": "^8.31.1",
+    "eslint": "^9.25.1",
+    "esbuild": "^0.25.3",
+    "npm-run-all": "^4.1.5",
+    "typescript": "^5.8.3",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.5.2"
+  }
+}
