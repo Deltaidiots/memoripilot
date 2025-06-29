@@ -2,21 +2,18 @@
 
 <div align="center">
 
-![Memory Bank Logo](resources/dark/memory.svg)
+![Memory Bank Logo](https://raw.githubusercontent.com/Deltaidiots/memory-bank-copilot/main/resources/memory-bank-icon.png)
 
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://marketplace.visualstudio.co### Architecture
-
-Memory Bank follows a modular, extensible architecture:
-
-### Workspace Analysis
-
-The extension uses a sophisticated workspace detection and analysis system designed to handle complex development environments:?itemName=asadbek064.memory-bank-copilot)
-[![Installs](https://img.shields.io/badge/installs-growing-success)](https://marketplace.visualstudio.com/items?itemName=asadbek064.memory-bank-copilot)
-[![License](https://img.shields.io/badge/license-MIT-brightgreen.svg)](LICENSE)
+[![VS Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/gujjar19.memory-bank-copilot?style=flat-square&label=VS%20Marketplace&logo=visual-studio-code)](https://marketplace.visualstudio.com/items?itemName=gujjar19.memory-bank-copilot)
+[![Installs](https://img.shields.io/visual-studio-marketplace/i/gujjar19.memory-bank-copilot?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=gujjar19.memory-bank-copilot)
+[![Rating](https://img.shields.io/visual-studio-marketplace/r/gujjar19.memory-bank-copilot?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=gujjar19.memory-bank-copilot)
+[![License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE)
 
 </div>
 
 Memory Bank provides seamless, persistent context and knowledge management for GitHub Copilot Chat using VS Code's Language Model Tools API.
+
+![Memory Bank in Action](https://raw.githubusercontent.com/Deltaidiots/memory-bank-copilot/main/resources/demo-screenshot.png)
 
 ## ✨ Features
 

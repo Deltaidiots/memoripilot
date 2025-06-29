@@ -1,0 +1,42 @@
+name: Create GitHub Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - run: npm ci
+      - run: npm run compile
+      - name: Package Extension
+        run: npx @vscode/vsce package
+      
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Memory Bank for GitHub Copilot ${{ github.ref }}
+          body: |
+            Please see the [CHANGELOG.md](https://github.com/Deltaidiots/memory-bank-copilot/blob/main/CHANGELOG.md) for details.
+          draft: false
+          prerelease: false
+          
+      - name: Upload VSIX as Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./memory-bank-copilot-${{ github.ref_name }}.vsix
+          asset_name: memory-bank-copilot-${{ github.ref_name }}.vsix
+          asset_content_type: application/octet-stream

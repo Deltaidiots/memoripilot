@@ -6,7 +6,7 @@ First off, thank you for considering contributing to Memory Bank! It's people li
 
 Before you begin:
 - Make sure you have a [GitHub account](https://github.com/signup)
-- [Fork the repository](https://github.com/asadbek064/memory-bank-copilot/fork) on GitHub
+- [Fork the repository](https://github.com/Deltaidiots/memory-bank-copilot/fork) on GitHub
 - Familiarize yourself with [VS Code extension development](https://code.visualstudio.com/api)
 
 ## Development Environment Setup
@@ -64,7 +64,7 @@ Before you begin:
    git push origin feature/your-feature-name
    ```
 
-2. [Submit a pull request](https://github.com/asadbek064/memory-bank-copilot/compare) from your branch to our `main` branch.
+2. [Submit a pull request](https://github.com/Deltaidiots/memory-bank-copilot/compare) from your branch to our `main` branch.
 
 3. Wait for the maintainers to review your PR. We'll provide feedback as soon as possible.
 

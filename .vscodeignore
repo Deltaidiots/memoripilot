@@ -1,6 +1,6 @@
 .vscode/**
 .vscode-test/**
-out/**
+out/**/*.map
 node_modules/**
 src/**
 .gitignore
@@ -12,3 +12,13 @@ vsc-extension-quickstart.md
 **/*.map
 **/*.ts
 **/.vscode-test.*
+compile.log
+setup-test-env.sh
+REDESIGN_PROPOSAL.md
+CLEANUP_SUMMARY.md
+ANALYZER_REDESIGN.md
+EXPERT_TESTING_REPORT.md
+IMPLEMENTATION_SUMMARY.md
+.eslintrc.json
+.github/**
+*.vsix
