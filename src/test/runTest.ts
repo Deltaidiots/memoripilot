@@ -12,7 +12,7 @@ export function run(): Promise<void> {
 
   const testsRoot = path.resolve(__dirname, '..');
 
-  return new Promise((c, e) => {
+  return new Promise((resolve, reject) => {
     glob('**/**.test.js', { cwd: testsRoot })
       .then((files: string[]) => {
         // Add files to the test suite
@@ -22,18 +22,18 @@ export function run(): Promise<void> {
           // Run the mocha test
           mocha.run((failures: number) => {
             if (failures > 0) {
-              e(new Error(`${failures} tests failed.`));
+              reject(new Error(`${failures} tests failed.`));
             } else {
-              c();
+              resolve();
             }
           });
         } catch (err) {
           console.error(err);
-          e(err);
+          reject(err);
         }
       })
       .catch((err: any) => {
-        e(err);
+        reject(err);
       });
   });
 }

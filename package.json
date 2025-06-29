@@ -12,7 +12,7 @@
   "activationEvents": [
     "onChat:memory",
     "onLanguageModelTool:memory_bank_update_context",
-    "onLanguageModelTool:memory_bank_log_decision", 
+    "onLanguageModelTool:memory_bank_log_decision",
     "onLanguageModelTool:memory_bank_update_progress",
     "onLanguageModelTool:memory_bank_show_memory",
     "onLanguageModelTool:memory_bank_update_all",
@@ -38,7 +38,9 @@
               "description": "The current context or focus area to set"
             }
           },
-          "required": ["context"]
+          "required": [
+            "context"
+          ]
         }
       },
       {
@@ -61,7 +63,9 @@
               "description": "The reasoning behind the decision"
             }
           },
-          "required": ["decision"]
+          "required": [
+            "decision"
+          ]
         }
       },
       {
@@ -77,17 +81,23 @@
           "properties": {
             "done": {
               "type": "array",
-              "items": {"type": "string"},
+              "items": {
+                "type": "string"
+              },
               "description": "Tasks that have been completed"
             },
             "doing": {
-              "type": "array", 
-              "items": {"type": "string"},
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
               "description": "Tasks currently in progress"
             },
             "next": {
               "type": "array",
-              "items": {"type": "string"}, 
+              "items": {
+                "type": "string"
+              },
               "description": "Tasks planned for the future"
             }
           }
@@ -106,11 +116,20 @@
           "properties": {
             "fileName": {
               "type": "string",
-              "enum": ["activeContext.md", "productContext.md", "progress.md", "decisionLog.md", "projectBrief.md", "systemPatterns.md"],
+              "enum": [
+                "activeContext.md",
+                "productContext.md",
+                "progress.md",
+                "decisionLog.md",
+                "projectBrief.md",
+                "systemPatterns.md"
+              ],
               "description": "The memory bank file to display"
             }
           },
-          "required": ["fileName"]
+          "required": [
+            "fileName"
+          ]
         }
       },
       {
@@ -139,11 +158,18 @@
           "properties": {
             "mode": {
               "type": "string",
-              "enum": ["architect", "code", "ask", "debug"],
+              "enum": [
+                "architect",
+                "code",
+                "ask",
+                "debug"
+              ],
               "description": "The working mode to switch to"
             }
           },
-          "required": ["mode"]
+          "required": [
+            "mode"
+          ]
         }
       }
     ],
@@ -195,16 +221,19 @@
     "test:extension": "npm run compile-tests && node ./out/test/suite/extension.test.js"
   },
   "devDependencies": {
-    "@types/vscode": "^1.101.0",
+    "@types/glob": "^8.1.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "20.x",
+    "@types/vscode": "^1.101.0",
     "@typescript-eslint/eslint-plugin": "^8.31.1",
     "@typescript-eslint/parser": "^8.31.1",
-    "eslint": "^9.25.1",
-    "esbuild": "^0.25.3",
-    "npm-run-all": "^4.1.5",
-    "typescript": "^5.8.3",
     "@vscode/test-cli": "^0.0.10",
-    "@vscode/test-electron": "^2.5.2"
+    "@vscode/test-electron": "^2.5.2",
+    "esbuild": "^0.25.3",
+    "eslint": "^9.25.1",
+    "glob": "^11.0.3",
+    "mocha": "^11.7.1",
+    "npm-run-all": "^4.1.5",
+    "typescript": "^5.8.3"
   }
 }
