@@ -1,8 +1,24 @@
-# Memory Bank for Copilot
+# Memory Bank for GitHub Copilot
+
+<div align="center">
+
+![Memory Bank Logo](resources/dark/memory.svg)
+
+[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://marketplace.visualstudio.co### Architecture
+
+Memory Bank follows a modular, extensible architecture:
+
+### Workspace Analysis
+
+The extension uses a sophisticated workspace detection and analysis system designed to handle complex development environments:?itemName=asadbek064.memory-bank-copilot)
+[![Installs](https://img.shields.io/badge/installs-growing-success)](https://marketplace.visualstudio.com/items?itemName=asadbek064.memory-bank-copilot)
+[![License](https://img.shields.io/badge/license-MIT-brightgreen.svg)](LICENSE)
+
+</div>
 
 Memory Bank provides seamless, persistent context and knowledge management for GitHub Copilot Chat using VS Code's Language Model Tools API.
 
-## Features
+## ✨ Features
 
 - **Native GitHub Copilot Integration**: Tools appear directly in Copilot's agent mode
 - **Automatic Tool Discovery**: Copilot automatically suggests relevant memory operations  
@@ -193,6 +209,46 @@ npm run lint          # ESLint code quality
 - In EDH mode, you may need to restart if tools don't appear initially
 - Fallback chat participant mode available when Language Model Tools API is not available
 
+## Architecture
+
+Memory Bank follows a modular, extensible architecture:
+
+### Workspace Analysis
+
+The extension uses a sophisticated workspace detection and analysis system:
+
+```
+Memory Bank Tools
+└─ UpdateMemoryBankTool
+   ├─ selects a WorkspaceFolder (context-aware)
+   └─ calls ↓
+AnalyzerRegistry
+└─ getAnalyzer(workspaceFolder)  ← cache map
+   └─ RepoAnalyzer (one per workspace)
+      ├─ PackageJsonScanner (JS/TS)
+      ├─ PyProjectScanner   (Python)
+      └─ ReadmeScanner
+```
+
+Key architectural features:
+- **Per-Workspace Analysis**: Each workspace gets its own analyzer instance
+- **Pluggable Scanners**: Extensible system to support multiple project types
+- **Smart Workspace Selection**: Multi-strategy approach for identifying the correct workspace
+- **Multi-Root Workspace Support**: Handles complex project setups correctly
+- **Extension Development Host (EDH) Support**: Special handling for development scenarios
+- **Robust Error Handling**: Clear errors and graceful fallbacks
+- **User Choice**: Prompts for workspace selection when appropriate
+
+### Memory Management
+
+The extension maintains a structured set of markdown files with specific purposes:
+- **Product Context**: High-level project overview and dependencies
+- **Active Context**: Current focus and goals
+- **Decision Log**: Architecture and implementation decisions
+- **Progress Tracking**: What's done, in progress, and upcoming
+- **Project Brief**: Project purpose and requirements
+- **System Patterns**: Design patterns and architectural conventions
+
 ## Release Notes
 
 ## Release Notes
@@ -236,11 +292,47 @@ npm run lint          # ESLint code quality
 - **[TESTING.md](./TESTING.md)** - Testing guide and examples for Language Model Tools
 - **[CLEANUP_SUMMARY.md](./CLEANUP_SUMMARY.md)** - Code cleanup and architecture alignment summary
 - **[IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md)** - Implementation details and benefits
+- **[ANALYZER_REDESIGN.md](./ANALYZER_REDESIGN.md)** - WorkspaceAnalyzer architecture improvements
 
----
+## Contributing
+
+Contributions are welcome! Here's how you can contribute to Memory Bank:
+
+1. **Fork the repository** on GitHub
+2. **Clone** your fork locally
+3. **Create a branch** for your feature or bug fix
+4. **Make your changes** and add appropriate tests
+5. **Run the tests** to ensure they pass: `npm test`
+6. **Commit your changes** with clear, descriptive messages
+7. **Push to your fork** and submit a pull request
+
+### Code Standards
+
+- Follow the existing code style and patterns
+- Write TypeScript with strict type checking
+- Include appropriate tests for new features
+- Update documentation as needed
+- Respect the existing architecture
+
+### Pull Request Process
+
+1. Update the README.md or documentation with details of your changes
+2. Update the CHANGELOG.md with your additions
+3. Make sure all tests pass and there are no lint errors
+4. Your PR will be reviewed by maintainers
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Credits
 
-Memory Bank for Copilot leverages VS Code's Language Model Tools API to provide seamless GitHub Copilot integration, inspired by the original [Memory Bank](https://raw.githubusercontent.com/GreatScottyMac/roo-code-memory-bank/main/README.md) concept.
+Memory Bank for GitHub Copilot leverages VS Code's Language Model Tools API to provide seamless GitHub Copilot integration, inspired by the original [Memory Bank](https://raw.githubusercontent.com/GreatScottyMac/roo-code-memory-bank/main/README.md) concept.
+
+---
+
+<div align="center">
 
 **Enjoy your enhanced GitHub Copilot experience with persistent project memory!**
+
+</div>
