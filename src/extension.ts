@@ -6,6 +6,14 @@ import { ModeManager } from "./memory/modes/ModeManager";
 import { SessionManager } from "./memory/SessionManager";
 import { CopilotIntegration } from "./copilot/CopilotIntegration";
 import { CopilotCommandHandler } from "./copilot/CopilotCommandHandler";
+import {
+  UpdateContextTool,
+  LogDecisionTool,
+  UpdateProgressTool,
+  ShowMemoryTool,
+  UpdateMemoryBankTool,
+  SwitchModeTool
+} from "./tools/index";
 
 let memoryManager: MemoryManager | undefined;
 let modeManager: ModeManager | undefined;
@@ -75,6 +83,31 @@ export function activate(ctx: vscode.ExtensionContext): void {
   } catch (error) {
     console.error("Failed to register Memory Bank chat participant:", error);
     vscode.window.showErrorMessage(`Failed to register Memory Bank: ${error}`);
+  }
+  
+  // Register Language Model Tools for GitHub Copilot integration
+  try {
+    if (vscode.lm && vscode.lm.registerTool) {
+      console.log("Registering Language Model Tools...");
+      
+      ctx.subscriptions.push(
+        vscode.lm.registerTool('memory_bank_update_context', new UpdateContextTool()),
+        vscode.lm.registerTool('memory_bank_log_decision', new LogDecisionTool()),
+        vscode.lm.registerTool('memory_bank_update_progress', new UpdateProgressTool()),
+        vscode.lm.registerTool('memory_bank_show_memory', new ShowMemoryTool()),
+        vscode.lm.registerTool('memory_bank_update_all', new UpdateMemoryBankTool()),
+        vscode.lm.registerTool('memory_bank_switch_mode', new SwitchModeTool())
+      );
+      
+      console.log("Language Model Tools registered successfully!");
+      vscode.window.showInformationMessage("Memory Bank tools registered for GitHub Copilot!");
+    } else {
+      console.warn("Language Model Tools API not available - falling back to chat participant only");
+      vscode.window.showWarningMessage("Language Model Tools API not available. Using chat participant mode only.");
+    }
+  } catch (error) {
+    console.error("Failed to register Language Model Tools:", error);
+    vscode.window.showWarningMessage(`Failed to register Memory Bank tools: ${error}. Using chat participant mode only.`);
   }
   
   // Register commands

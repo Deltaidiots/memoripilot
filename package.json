@@ -1,8 +1,8 @@
 {
   "name": "memory-bank-copilot",
   "displayName": "memory-bank-copilot",
-  "description": "Enhance GitHub Copilot with persistent memory and context",
-  "version": "0.0.1",
+  "description": "Native GitHub Copilot integration with persistent memory and context using Language Model Tools API",
+  "version": "0.1.0",
   "engines": {
     "vscode": "^1.101.0"
   },
@@ -11,10 +11,142 @@
   ],
   "activationEvents": [
     "onChat:memory",
+    "onLanguageModelTool:memory_bank_update_context",
+    "onLanguageModelTool:memory_bank_log_decision", 
+    "onLanguageModelTool:memory_bank_update_progress",
+    "onLanguageModelTool:memory_bank_show_memory",
+    "onLanguageModelTool:memory_bank_update_all",
+    "onLanguageModelTool:memory_bank_switch_mode",
     "onStartupFinished"
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "languageModelTools": [
+      {
+        "name": "memory_bank_update_context",
+        "displayName": "Update Active Context",
+        "toolReferenceName": "updateContext",
+        "modelDescription": "Updates the active context file with the current working focus. Use this when the user wants to set their current task, goal, or area of focus. This helps maintain continuity across coding sessions.",
+        "userDescription": "Set your current working focus in the memory bank",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(target)",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "type": "string",
+              "description": "The current context or focus area to set"
+            }
+          },
+          "required": ["context"]
+        }
+      },
+      {
+        "name": "memory_bank_log_decision",
+        "displayName": "Log Decision",
+        "toolReferenceName": "logDecision",
+        "modelDescription": "Logs an important architectural or implementation decision to the decision log. Use this when the user makes or mentions a significant choice about technology, architecture, or implementation approach.",
+        "userDescription": "Log an important decision to the memory bank",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(checklist)",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "decision": {
+              "type": "string",
+              "description": "The decision that was made"
+            },
+            "rationale": {
+              "type": "string",
+              "description": "The reasoning behind the decision"
+            }
+          },
+          "required": ["decision"]
+        }
+      },
+      {
+        "name": "memory_bank_update_progress",
+        "displayName": "Update Progress",
+        "toolReferenceName": "updateProgress",
+        "modelDescription": "Updates the progress tracking with done, doing, and next items. Use this when the user mentions completing tasks, starting new work, or planning upcoming activities.",
+        "userDescription": "Update your project progress tracking",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(list-unordered)",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "done": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "Tasks that have been completed"
+            },
+            "doing": {
+              "type": "array", 
+              "items": {"type": "string"},
+              "description": "Tasks currently in progress"
+            },
+            "next": {
+              "type": "array",
+              "items": {"type": "string"}, 
+              "description": "Tasks planned for the future"
+            }
+          }
+        }
+      },
+      {
+        "name": "memory_bank_show_memory",
+        "displayName": "Show Memory",
+        "toolReferenceName": "showMemory",
+        "modelDescription": "Displays the content of a specific memory bank file. Use this when the user wants to see what's currently stored in their project memory files.",
+        "userDescription": "Show content from a memory bank file",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(book)",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "fileName": {
+              "type": "string",
+              "enum": ["activeContext.md", "productContext.md", "progress.md", "decisionLog.md", "projectBrief.md", "systemPatterns.md"],
+              "description": "The memory bank file to display"
+            }
+          },
+          "required": ["fileName"]
+        }
+      },
+      {
+        "name": "memory_bank_update_all",
+        "displayName": "Update Memory Bank",
+        "toolReferenceName": "updateMemoryBank",
+        "modelDescription": "Analyzes the current workspace and updates relevant memory bank files based on recent changes, new files, and project state. Use this when the user wants to sync their memory bank with current project state.",
+        "userDescription": "Update memory bank based on current workspace",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(sync)",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        }
+      },
+      {
+        "name": "memory_bank_switch_mode",
+        "displayName": "Switch Mode",
+        "toolReferenceName": "switchMode",
+        "modelDescription": "Switches the memory bank working mode between Architect (design), Code (implementation), Ask (questions), and Debug (troubleshooting). Different modes provide access to different memory files.",
+        "userDescription": "Switch memory bank working mode",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(gear)",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": ["architect", "code", "ask", "debug"],
+              "description": "The working mode to switch to"
+            }
+          },
+          "required": ["mode"]
+        }
+      }
+    ],
     "chatParticipants": [
       {
         "id": "memory-bank",

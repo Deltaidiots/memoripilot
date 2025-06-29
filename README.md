@@ -1,9 +1,12 @@
 # Memory Bank for Copilot
 
-Memory Bank provides persistent context and knowledge management for GitHub Copilot Chat, enhancing its ability to assist you with your projects.
+Memory Bank provides seamless, persistent context and knowledge management for GitHub Copilot Chat using VS Code's Language Model Tools API.
 
 ## Features
 
+- **Native GitHub Copilot Integration**: Tools appear directly in Copilot's agent mode
+- **Automatic Tool Discovery**: Copilot automatically suggests relevant memory operations  
+- **User Safety**: Built-in confirmation dialogs for all operations
 - **Persistent Memory**: Maintains project context across editor restarts and chat sessions
 - **Core Memory Files**: Auto-scaffolds a memory-bank directory with specialized files for different types of information
 - **Knowledge Management**: Organizes project information into dedicated files with clear purposes
@@ -11,6 +14,52 @@ Memory Bank provides persistent context and knowledge management for GitHub Copi
 - **Real-time Updates**: Monitors file changes and maintains cross-file consistency
 - **Intelligent Mode Switching**: Automatically switches modes based on your input
 - **Session Management**: Auto-synchronizes at the end of each session
+
+## Language Model Tools
+
+Memory Bank registers the following tools that GitHub Copilot can use automatically:
+
+| Tool | Reference Name | Description |
+|------|----------------|-------------|
+| **Update Active Context** | `#updateContext` | Set your current working focus |
+| **Log Decision** | `#logDecision` | Record important architectural decisions |
+| **Update Progress** | `#updateProgress` | Track done/doing/next items |
+| **Show Memory** | `#showMemory` | Display memory bank file contents |
+| **Update Memory Bank** | `#updateMemoryBank` | Sync memory with workspace state |
+| **Switch Mode** | `#switchMode` | Change working mode (architect/code/ask/debug) |
+
+## Usage with GitHub Copilot Chat
+
+### Natural Language Interaction
+
+Simply talk to GitHub Copilot Chat naturally, and it will automatically suggest using Memory Bank tools:
+
+**Examples:**
+- "I'm working on implementing the authentication system" 
+  → Copilot suggests using `#updateContext`
+- "I decided to use PostgreSQL for the database"
+  → Copilot suggests using `#logDecision` 
+- "Show me what's in my progress file"
+  → Copilot suggests using `#showMemory`
+- "I finished the login page and started on the dashboard"
+  → Copilot suggests using `#updateProgress`
+
+### Direct Tool References  
+
+You can also reference tools directly in your prompts:
+
+- `#updateContext` Set active context to implementing user registration
+- `#logDecision` decision:"Use React Query" rationale:"Better caching and state management"
+- `#updateProgress` done:["Login page", "User model"] doing:["Dashboard"] next:["Admin panel"]
+- `#showMemory` fileName:"decisionLog.md"
+- `#switchMode` mode:"architect"
+
+### Confirmation Flow
+
+Each tool operation includes:
+1. **Automatic suggestion** by Copilot based on context
+2. **Clear confirmation dialog** showing what will be changed
+3. **Rich feedback** confirming the operation completed
 
 ### Memory Files
 
@@ -27,15 +76,40 @@ Memory Bank creates and maintains these files in your project:
 
 ## How to Use
 
-1. Install the extension
-2. Open the VS Code Chat panel (View > Chat)
-3. Select "memory" from the chat selector dropdown
-4. Say "hello" to initialize your memory bank
-5. Use slash commands for common operations:
+### With GitHub Copilot Chat (Recommended)
+
+1. Install the extension and open a workspace
+2. Open GitHub Copilot Chat
+3. Start talking naturally about your project:
+   - "I'm working on the authentication system now"
+   - "I decided to use MongoDB for the database" 
+   - "Show me my current progress"
+   - "Switch to debug mode"
+
+Copilot will automatically suggest using Memory Bank tools when appropriate, with clear confirmation dialogs.
+
+### With VS Code Chat (Fallback)
+
+If Language Model Tools aren't available, the extension provides a chat participant:
+
+1. Open the VS Code Chat panel (View > Chat)
+2. Select "memory" from the chat selector dropdown
+3. Say "hello" to initialize your memory bank
+4. Use slash commands for common operations:
    - `/active-context` - Set your current working focus
    - `/append-decision` - Log a new decision to decisionLog.md
    - `/show-memory` - Show a memory bank file
    - `/update-memory-bank` - Manually update the memory bank (UMB)
+
+### Manual Commands
+
+Press `Ctrl+Alt+M` (or `Cmd+Alt+M` on Mac) to access Memory Bank commands directly:
+- `/mb-init` - Initialize memory bank files
+- `/mb-update` - Update memory bank based on workspace content
+- `/mb-show [file]` - Show memory bank file content
+- `/mb-decision <text>` - Log a new decision
+- `/mb-context <text>` - Set your active context
+- `/mb-mode <mode>` - Switch mode (architect, code, ask, debug)
 
 ## Working Modes
 
@@ -49,100 +123,43 @@ Memory Bank supports four specialized working modes:
 | **Debug** | Identify and fix issues | Troubleshooting and fixes |
 
 You can switch modes by:
-1. Clicking on the Memory Mode indicator in the status bar 
-2. Using natural language in your chat (e.g., "Let's design the architecture..." switches to Architect mode)
+1. Using GitHub Copilot Chat: "Switch to architect mode" 
+2. Using the `#switchMode` tool directly
+3. Clicking on the Memory Mode indicator in the status bar
+4. Using the manual command: `/mb-mode architect`
 
-## Using with GitHub Copilot Chat
+## Example Workflow
 
-### Using Memory Bank Commands
-
-There are two ways to use Memory Bank commands:
-
-1. **Keyboard Shortcut (Recommended)**
-   - Press `Ctrl+Alt+M` (or `Cmd+Alt+M` on Mac)
-   - Type the command (e.g., `mb-help`)
-   - Press Enter
-
-2. **Command Palette**
-   - Press `Ctrl+Shift+P`
-   - Type "Memory Bank: Run Command"
-   - Enter the command (e.g., `/mb-init`)
-
-### Available Commands
-
-- `/mb-init` - Initialize memory bank files
-- `/mb-update` - Update memory bank based on workspace content
-- `/mb-show [file]` - Show memory bank file (or "list" for all files)
-- `/mb-decision <text>` - Log a new decision
-- `/mb-context <text>` - Set your active context
-- `/mb-mode <mode>` - Switch mode (architect, code, ask, debug)
-- `/mb-help` - Show help for all commands
-
-### Example Usage
-
-Using the keyboard shortcut or command palette:
 ```
-/mb-init
-/mb-update
-/mb-mode architect
-/mb-decision Use PostgreSQL for the database
+👤 User: "I'm starting work on the user authentication system"
+
+🤖 Copilot: "I'll update your active context. Let me use the updateContext tool."
+[Confirmation dialog: "Set active context to: implementing user authentication system?"]
+
+👤 User: "Yes"
+
+🤖 Copilot: "✅ Active context updated to: implementing user authentication system"
+
+👤 User: "I decided to use JWT tokens instead of sessions"
+
+🤖 Copilot: "That's an important architectural decision. Let me log it using the logDecision tool."
+[Confirmation dialog with decision and rationale]
+
+👤 User: "Yes, log it"
+
+🤖 Copilot: "✅ Decision logged: Use JWT tokens for authentication"
 ```
 
-### Additional Integration Options
+## Installation & Setup
 
-#### Option 1: Automatic Context Injection
+1. Install the extension from VS Code Marketplace
+2. Open a workspace/project folder
+3. The extension automatically initializes when you start using GitHub Copilot Chat
+4. Memory bank files are created in `memory-bank/` directory
 
-The extension creates a hidden `.copilot-memory-bank/context.md` file in your workspace that GitHub Copilot can see. This file is automatically updated with your project memory based on the current mode.
+## Architecture
 
-#### Option 2: Copy Context to Clipboard
-
-For more explicit control:
-
-1. Click the "Memory → Copilot" button in the status bar
-2. A specialized prompt with your memory context will be copied to your clipboard
-3. In GitHub Copilot Chat, use the `/system` command and paste this content 
-
-#### Option 3: Direct Command Access
-
-Press `Ctrl+Shift+P` and type "Memory Bank: Run Command" to access all memory bank commands through a quick input box.
-
-## Direct GitHub Copilot Chat Integration
-
-You can use GitHub Copilot Chat directly with your memory bank files without any special commands or extensions. Here's how:
-
-### Step 1: Initialize Your Memory Bank Files
-Use the extension to create the initial files or create them manually in a `memory-bank` folder.
-
-### Step 2: Teach GitHub Copilot About Your Memory Bank
-Copy and paste the system prompt from `system-prompt.md` into GitHub Copilot Chat using the `/system` command.
-
-### Step 3: Use Natural Language to Update Memory Bank
-Now you can simply talk to GitHub Copilot Chat using phrases like:
-
-- "Set active context to implementing the authentication system"
-- "Log a decision to use PostgreSQL for the database"
-- "Update my progress to show I completed the login page"
-- "What's in my product context file?"
-- "Update the memory bank based on my project"
-
-GitHub Copilot will suggest commands to update the appropriate memory bank files and can run them for you with your permission.
-
-### Example Conversation
-
-**You:** "Set active context to working on the authentication system"
-
-**Copilot:** "I'll update your active context. Here's what I'll add to your activeContext.md file:
-
-```markdown
-## Current Focus (June 28, 2025)
-Working on the authentication system. Implementing user login and registration flows.
-```
-
-Would you like me to update the file for you?"
-
-**You:** "Yes, please update it"
-
-**Copilot:** "I've updated your activeContext.md file with the new context."
+The extension uses VS Code's Language Model Tools API to provide native GitHub Copilot integration, with fallback support for VS Code Chat participants when the tools API isn't available.
 
 ## Development and Testing
 
@@ -150,19 +167,30 @@ To test this extension in the Extension Development Host (EDH):
 
 1. Clone the repository
 2. Run `npm install` to install dependencies
-3. Press F5 to launch the extension in debug mode
-4. In the new VS Code window (EDH), open the Chat panel
-5. Select "memory" from the dropdown
-6. Try interacting with the Memory Bank
+3. Run `npm run compile` to build the extension
+4. Press F5 to launch the extension in debug mode
+5. In the new VS Code window (EDH), open a workspace
+6. Start using GitHub Copilot Chat - the tools will be automatically available
 
 ## Known Issues
 
-- The extension currently relies on VS Code Chat API, not the GitHub Copilot Chat API directly
-- In EDH mode, you may need to click the "memory" participant again if it doesn't appear initially
+- Language Model Tools API requires VS Code 1.101.0+ and GitHub Copilot
+- In EDH mode, you may need to restart if tools don't appear initially
+- Fallback chat participant mode available when Language Model Tools API is not available
 
 ## Release Notes
 
-### 0.0.1
+### 0.1.0 - Language Model Tools Integration
+
+- **NEW**: Native GitHub Copilot integration using VS Code Language Model Tools API
+- **NEW**: Automatic tool discovery and suggestion in Copilot Chat
+- **NEW**: Built-in confirmation dialogs for all operations
+- **NEW**: Direct tool referencing with `#toolName` syntax
+- **IMPROVED**: Enhanced error handling and user feedback
+- **MAINTAINED**: Backward compatibility with VS Code Chat participant
+- **MAINTAINED**: All existing memory bank functionality and modes
+
+### 0.0.1 - Initial Release
 
 - Initial release with core functionality:
   - Memory bank file scaffolding and management
@@ -174,16 +202,16 @@ To test this extension in the Extension Development Host (EDH):
 
 ## Future Improvements
 
-- Deeper integration with GitHub Copilot Chat API when available
-- Enhanced cross-referencing between files
-- More robust file change synchronization
-- Additional visualization components
-- MCP tool endpoints for programmatic access
+- Enhanced tool chaining (tools calling other tools)
+- Dynamic tool availability based on project state
+- More sophisticated workspace analysis
+- Integration with additional VS Code APIs
+- Expanded file template system
 
 ---
 
 ## Credits
 
-Inspired by the original [Memory Bank](https://raw.githubusercontent.com/GreatScottyMac/roo-code-memory-bank/main/README.md) concept.
+Memory Bank for Copilot leverages VS Code's Language Model Tools API to provide seamless GitHub Copilot integration, inspired by the original [Memory Bank](https://raw.githubusercontent.com/GreatScottyMac/roo-code-memory-bank/main/README.md) concept.
 
-**Enjoy your enhanced GitHub Copilot experience!**
+**Enjoy your enhanced GitHub Copilot experience with persistent project memory!**
