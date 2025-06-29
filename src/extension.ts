@@ -11,6 +11,7 @@ import {
   SwitchModeTool
 } from "./tools/index";
 import { MemoryParticipant } from "./chat/MemoryParticipant";
+import { MemoryTreeDataProvider } from "./ui/MemoryTreeDataProvider";
 
 // Global state
 let memoryManager: MemoryManager | undefined;
@@ -25,19 +26,66 @@ let modeStatusBarItem: vscode.StatusBarItem | undefined;
 export function activate(ctx: vscode.ExtensionContext): void {
   console.log("Memory Bank extension is being activated...");
   
-  // Initialize when we have a workspace open
-  const ws = vscode.workspace.workspaceFolders?.[0];
-  if (ws) {
-    void initializeMemoryBank(ws);
-  } else {
-    // Setup a listener for when workspace folders change
-    ctx.subscriptions.push(
-      vscode.workspace.onDidChangeWorkspaceFolders(e => {
-        if (e.added.length > 0 && !memoryManager) {
-          void initializeMemoryBank(e.added[0]);
-        }
-      })
-    );
+  // Try to get the correct workspace using our utility
+  try {
+    const { WorkspaceUtil } = require('./utils/WorkspaceUtil');
+    
+    // Check if we're in development mode
+    const inDevelopment = WorkspaceUtil.isInExtensionDevelopmentHost();
+    console.log(`Extension activating in development mode: ${inDevelopment}`);
+    
+    // Log all available workspaces
+    const allFolders = vscode.workspace.workspaceFolders || [];
+    console.log(`Available workspaces (${allFolders.length}): ${allFolders.map(f => f.name + ': ' + f.uri.fsPath).join(', ')}`);
+    
+    // Find our extension workspace
+    const extensionWs = WorkspaceUtil.getExtensionWorkspace();
+    if (extensionWs) {
+      console.log(`Using extension workspace for initialization: ${extensionWs.uri.fsPath}`);
+      void initializeMemoryBank(extensionWs);
+      const memoryTreeDataProvider = new MemoryTreeDataProvider(extensionWs.uri.fsPath);
+      vscode.window.registerTreeDataProvider('memory-bank-view', memoryTreeDataProvider);
+    } else {
+      // Fallback to the first workspace
+      const ws = vscode.workspace.workspaceFolders?.[0];
+      if (ws) {
+        console.log(`No extension workspace found, using first workspace: ${ws.uri.fsPath}`);
+        void initializeMemoryBank(ws);
+        const memoryTreeDataProvider = new MemoryTreeDataProvider(ws.uri.fsPath);
+        vscode.window.registerTreeDataProvider('memory-bank-view', memoryTreeDataProvider);
+      } else {
+        console.log("No workspace folders available");
+        
+        // Setup a listener for when workspace folders change
+        ctx.subscriptions.push(
+          vscode.workspace.onDidChangeWorkspaceFolders(e => {
+            if (e.added.length > 0 && !memoryManager) {
+              void initializeMemoryBank(e.added[0]);
+            }
+          })
+        );
+      }
+    }
+  } catch (error) {
+    console.error(`Error during extension activation:`, error);
+    
+    // Fallback to basic initialization
+    const ws = vscode.workspace.workspaceFolders?.[0];
+    if (ws) {
+      console.log(`Falling back to first workspace: ${ws.uri.fsPath}`);
+      void initializeMemoryBank(ws);
+      const memoryTreeDataProvider = new MemoryTreeDataProvider(ws.uri.fsPath);
+      vscode.window.registerTreeDataProvider('memory-bank-view', memoryTreeDataProvider);
+    } else {
+      // Setup a listener for when workspace folders change
+      ctx.subscriptions.push(
+        vscode.workspace.onDidChangeWorkspaceFolders(e => {
+          if (e.added.length > 0 && !memoryManager) {
+            void initializeMemoryBank(e.added[0]);
+          }
+        })
+      );
+    }
   }
   
   // Register Language Model Tools for GitHub Copilot integration (primary mode)

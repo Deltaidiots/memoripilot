@@ -10,7 +10,7 @@ interface LogDecisionParams {
  * Tool for logging decisions to the memory bank
  */
 export class LogDecisionTool extends BaseMemoryBankTool<LogDecisionParams> {
-  async prepareInvocation(
+  async prepare(
     options: vscode.LanguageModelToolInvocationPrepareOptions<LogDecisionParams>,
     token: vscode.CancellationToken
   ) {

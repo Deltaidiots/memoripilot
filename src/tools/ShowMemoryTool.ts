@@ -10,7 +10,7 @@ interface ShowMemoryParams {
  * Tool for showing memory bank file contents
  */
 export class ShowMemoryTool extends BaseMemoryBankTool<ShowMemoryParams> {
-  async prepareInvocation(
+  async prepare(
     options: vscode.LanguageModelToolInvocationPrepareOptions<ShowMemoryParams>,
     token: vscode.CancellationToken
   ) {

@@ -1,11 +1,15 @@
 import * as vscode from "vscode";
-import { FILE_TEMPLATES } from "./FileTemplates";
+import {
+  FILE_TEMPLATES,
+  OPTIONAL_FILE_TEMPLATES,
+  ALL_FILE_TEMPLATES,
+} from "./FileTemplates";
 import { SummaryStrategy } from "./strategies/SummaryStrategy";
 import { LlmSummary } from "./strategies/LlmSummary";
 import { FileWatcher, MemoryFileChangeEvent } from "./FileWatcher";
 import { EventEmitter } from "events";
 
-export type MemoryFile = keyof typeof FILE_TEMPLATES;
+export type MemoryFile = keyof typeof ALL_FILE_TEMPLATES;
 
 export interface SummarisedMemory {
   path: MemoryFile;
@@ -45,9 +49,37 @@ export class MemoryManager extends EventEmitter {
   public static getInstance(
     workspace: vscode.WorkspaceFolder
   ): MemoryManager {
-    if (!this._instance) {
-      this._instance = new MemoryManager(workspace);
+    // Always prioritize finding the extension workspace, especially for EDH testing
+    try {
+      const { WorkspaceUtil } = require('../utils/WorkspaceUtil');
+      const extensionWorkspace = WorkspaceUtil.getExtensionWorkspace();
+      
+      if (extensionWorkspace) {
+        console.log(`MemoryManager: Found extension workspace: ${extensionWorkspace.uri.fsPath}`);
+        
+        // If we already have an instance but it's using a different workspace, we should reset it
+        if (this._instance && this._instance.workspace.uri.fsPath !== extensionWorkspace.uri.fsPath) {
+          console.log(`MemoryManager: Resetting instance to use extension workspace instead of ${this._instance.workspace.uri.fsPath}`);
+          this._instance = new MemoryManager(extensionWorkspace);
+        } else if (!this._instance) {
+          console.log(`MemoryManager: Creating new instance with extension workspace`);
+          this._instance = new MemoryManager(extensionWorkspace);
+        }
+      } else if (!this._instance) {
+        // No extension workspace found, and no existing instance
+        console.log(`MemoryManager: Using provided workspace: ${workspace.uri.fsPath}`);
+        this._instance = new MemoryManager(workspace);
+      }
+    } catch (error) {
+      console.error(`MemoryManager: Error finding extension workspace:`, error);
+      
+      // Only create a new instance if we don't have one already
+      if (!this._instance) {
+        console.log(`MemoryManager: Using provided workspace as fallback: ${workspace.uri.fsPath}`);
+        this._instance = new MemoryManager(workspace);
+      }
     }
+    
     return this._instance;
   }
 
@@ -56,51 +88,88 @@ export class MemoryManager extends EventEmitter {
    * @returns {Promise<void>}
    */
   public async initialise(): Promise<void> {
-    console.log("MemoryManager: Beginning initialization...");
-    const rootUri = this.pathUri("memory-bank");
-    console.log(`MemoryManager: Creating directory at ${rootUri.toString()}`);
-    
+    const memoryBankPath = vscode.Uri.joinPath(this.workspace.uri, "memory-bank");
+    console.log(`MemoryManager: Initializing memory bank at ${memoryBankPath.fsPath}`);
+
     try {
-      await vscode.workspace.fs.createDirectory(rootUri);
-      console.log("MemoryManager: Root directory created or verified");
-    } catch (err) {
-      console.error("MemoryManager: Failed to create directory:", err);
-      throw err;
-    }
-    
-    // Create each file if it doesn't exist
-    console.log("MemoryManager: Creating/checking files from templates");
-    
-    for (const [path, template] of Object.entries(FILE_TEMPLATES)) {
-      const fileUri = this.pathUri(path);
-      console.log(`MemoryManager: Processing ${path} at ${fileUri.toString()}`);
+      await vscode.workspace.fs.stat(memoryBankPath);
+      console.log(`MemoryManager: Memory bank directory exists at ${memoryBankPath.fsPath}`);
+    } catch (error) {
+      console.log(`MemoryManager: Memory bank directory does not exist at ${memoryBankPath.fsPath}, creating it`);
       
       try {
-        await vscode.workspace.fs.stat(fileUri);
-        console.log(`MemoryManager: ${path} exists, reading content`);
-        
-        // File exists, read it to cache
-        const content = await this.readFile(path as MemoryFile);
-        this.fileCache.set(path, content);
-        console.log(`MemoryManager: Cached content for ${path}, length: ${content.length}`);
-      } catch {
-        console.log(`MemoryManager: ${path} does not exist, creating it`);
-        // File doesn't exist, create it
-        try {
-          await vscode.workspace.fs.writeFile(fileUri, Buffer.from(template));
-          console.log(`MemoryManager: Created ${path}`);
-          this.fileCache.set(path, template);
-        } catch (writeErr) {
-          console.error(`MemoryManager: Failed to write ${path}:`, writeErr);
-          throw writeErr;
+        // In EDH mode, just create the directory without asking
+        const { WorkspaceUtil } = require('../utils/WorkspaceUtil');
+        if (WorkspaceUtil.isInExtensionDevelopmentHost()) {
+          console.log(`MemoryManager: Running in development host, creating memory-bank directory automatically`);
+          await vscode.workspace.fs.createDirectory(memoryBankPath);
+        } else {
+          // In normal mode, ask the user
+          const selection = await vscode.window.showInformationMessage(
+            "The 'memory-bank' directory does not exist. Would you like to create it?",
+            { modal: true },
+            "Yes",
+            "No"
+          );
+
+          if (selection !== "Yes") {
+            vscode.window.showInformationMessage(
+              "Memory Bank initialization cancelled."
+            );
+            return;
+          }
+          await vscode.workspace.fs.createDirectory(memoryBankPath);
         }
+      } catch (createError) {
+        console.error(`MemoryManager: Error creating memory-bank directory:`, createError);
+        throw new Error(`Failed to create memory-bank directory: ${createError instanceof Error ? createError.message : String(createError)}`);
+      }
+    }
+
+    // Initialize all required files first
+    for (const [path, template] of Object.entries(FILE_TEMPLATES)) {
+      const fileUri = this.pathUri(path);
+      try {
+        await vscode.workspace.fs.stat(fileUri);
+        console.log(`MemoryManager: Required file exists: ${path}`);
+      } catch {
+        console.log(`MemoryManager: Creating required file: ${path}`);
+        await vscode.workspace.fs.writeFile(fileUri, Buffer.from(template));
       }
     }
     
-    // Start watching files
+    // Then initialize all optional files
+    for (const [path, template] of Object.entries(OPTIONAL_FILE_TEMPLATES)) {
+      const fileUri = this.pathUri(path);
+      try {
+        await vscode.workspace.fs.stat(fileUri);
+        console.log(`MemoryManager: Optional file exists: ${path}`);
+      } catch {
+        console.log(`MemoryManager: Creating optional file: ${path}`);
+        await vscode.workspace.fs.writeFile(fileUri, Buffer.from(template));
+      }
+    }
+
+    // Check for a root project brief and copy it if it exists
+    const projectBriefUri = vscode.Uri.joinPath(
+      this.workspace.uri,
+      "projectBrief.md"
+    );
+    try {
+      const projectBriefContent = await vscode.workspace.fs.readFile(
+        projectBriefUri
+      );
+      console.log(`MemoryManager: Found root projectBrief.md, copying to memory-bank folder`);
+      await vscode.workspace.fs.writeFile(
+        this.pathUri("memory-bank/projectBrief.md"),
+        projectBriefContent
+      );
+    } catch (error) {
+      // projectBrief.md doesn't exist at the root, no need to do anything
+      console.log(`MemoryManager: No root projectBrief.md found, using template or existing file`);
+    }
+
     this.startWatching();
-    
-    // Log for debugging
     console.log("Memory Bank initialized successfully");
   }
 
@@ -112,11 +181,11 @@ export class MemoryManager extends EventEmitter {
   public async getSummaries(
     totalBudget = 256
   ): Promise<SummarisedMemory[]> {
-    const perFile = Math.floor(totalBudget / Object.keys(FILE_TEMPLATES).length);
+    const perFile = Math.floor(
+      totalBudget / Object.keys(ALL_FILE_TEMPLATES).length
+    );
     const out: SummarisedMemory[] = [];
-    for (const path of Object.keys(
-      FILE_TEMPLATES
-    ) as MemoryFile[]) {
+    for (const path of Object.keys(ALL_FILE_TEMPLATES) as MemoryFile[]) {
       const text = await this.readFile(path);
       const summary = await this.summariser.summarise(text, perFile);
       out.push({ path, summary });
@@ -250,7 +319,7 @@ export class MemoryManager extends EventEmitter {
    * Start watching all memory files.
    */
   public startWatching(): void {
-    const files = Object.keys(FILE_TEMPLATES) as MemoryFile[];
+    const files = Object.keys(ALL_FILE_TEMPLATES) as MemoryFile[];
     this.watcher.watchFiles(files);
   }
 
@@ -279,6 +348,14 @@ export class MemoryManager extends EventEmitter {
     return content;
   }
 
+  /**
+   * Get the workspace folder URI
+   * @returns The workspace folder URI
+   */
+  public getWorkspaceFolder(): vscode.WorkspaceFolder {
+    return this.workspace;
+  }
+
   // ---------------- private helpers ----------------
   private pathUri(rel: string): vscode.Uri {
     return vscode.Uri.joinPath(this.workspace.uri, rel);
@@ -291,11 +368,20 @@ export class MemoryManager extends EventEmitter {
    */
   public async readFile(path: MemoryFile): Promise<string> {
     try {
+      // Always read from disk for freshness
       const bytes = await vscode.workspace.fs.readFile(this.pathUri(path));
-      return Buffer.from(bytes).toString("utf8");
+      const content = Buffer.from(bytes).toString("utf8");
+      this.fileCache.set(path, content); // Update cache after reading
+      return content;
     } catch (err) {
       console.error(`Error reading file ${path}:`, err);
-      return ""; // Return empty string if file doesn't exist
+      // If file doesn't exist, check template
+      const template = (ALL_FILE_TEMPLATES as any)[path];
+      if (template) {
+        await this.writeFile(path, template); // Create it
+        return template;
+      }
+      return ""; // Return empty string if file doesn't exist and has no template
     }
   }
 }

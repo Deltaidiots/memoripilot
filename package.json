@@ -21,6 +21,15 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "views": {
+      "explorer": [
+        {
+          "id": "memory-bank-view",
+          "name": "Memory Bank",
+          "icon": "resources/dark/memory.svg"
+        }
+      ]
+    },
     "languageModelTools": [
       {
         "name": "memory_bank_update_context",

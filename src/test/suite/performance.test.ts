@@ -75,7 +75,7 @@ suite('Memory Bank Performance Tests', () => {
       // Add required VS Code types that might be missing
     } as vscode.LanguageModelToolInvocationPrepareOptions<{ context: string }>;
     
-    await updateContextTool.prepareInvocation(prepareOptions1, cancellationToken);
+    await updateContextTool.prepare(prepareOptions1, cancellationToken);
     const prepare1Time = Date.now() - start1;
     assert.ok(prepare1Time < 100, `UpdateContextTool preparation took ${prepare1Time}ms, should be under 100ms`);
     
@@ -97,7 +97,7 @@ suite('Memory Bank Performance Tests', () => {
       requestId: 'test-2',
     } as vscode.LanguageModelToolInvocationPrepareOptions<{ decision: string; rationale?: string }>;
     
-    await logDecisionTool.prepareInvocation(prepareOptions2, cancellationToken);
+    await logDecisionTool.prepare(prepareOptions2, cancellationToken);
     const prepare2Time = Date.now() - start3;
     assert.ok(prepare2Time < 100, `LogDecisionTool preparation took ${prepare2Time}ms, should be under 100ms`);
     

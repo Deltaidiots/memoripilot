@@ -86,8 +86,8 @@ suite('Language Model Tools Comprehensive Tests', () => {
                `${ToolClass.name} should extend BaseMemoryBankTool`);
       
       // Check required methods exist
-      assert.strictEqual(typeof tool.prepareInvocation, 'function',
-               `${ToolClass.name} should have prepareInvocation method`);
+      assert.strictEqual(typeof tool.prepare, 'function',
+               `${ToolClass.name} should have prepare method`);
       assert.strictEqual(typeof tool.invoke, 'function',
                `${ToolClass.name} should have invoke method`);
     }
@@ -110,7 +110,7 @@ suite('Language Model Tools Comprehensive Tests', () => {
         input: testCase
       };
       
-      const preparation = await tool.prepareInvocation(prepareOptions, mockCancellationToken);
+      const preparation = await tool.prepare(prepareOptions, mockCancellationToken);
       
       assert.ok(preparation, 'Should return preparation result');
       assert.ok(preparation.invocationMessage, 'Should have invocation message');
@@ -161,7 +161,7 @@ suite('Language Model Tools Comprehensive Tests', () => {
 
     for (const testCase of testCases) {
       const prepareOptions = { input: testCase };
-      const preparation = await tool.prepareInvocation(prepareOptions, mockCancellationToken);
+      const preparation = await tool.prepare(prepareOptions, mockCancellationToken);
       
       assert.ok(preparation.invocationMessage.includes(testCase.decision));
       if (testCase.rationale) {
@@ -204,7 +204,7 @@ suite('Language Model Tools Comprehensive Tests', () => {
 
     for (const testCase of testCases) {
       const prepareOptions = { input: testCase };
-      const preparation = await tool.prepareInvocation(prepareOptions, mockCancellationToken);
+      const preparation = await tool.prepare(prepareOptions, mockCancellationToken);
       
       assert.ok(preparation.invocationMessage);
       
@@ -239,7 +239,7 @@ suite('Language Model Tools Comprehensive Tests', () => {
 
     for (const fileName of validFiles) {
       const prepareOptions = { input: { fileName } };
-      const preparation = await tool.prepareInvocation(prepareOptions, mockCancellationToken);
+      const preparation = await tool.prepare(prepareOptions, mockCancellationToken);
       
       assert.ok(preparation.invocationMessage.includes(fileName));
       
@@ -266,7 +266,7 @@ suite('Language Model Tools Comprehensive Tests', () => {
     // Test valid modes
     for (const mode of validModes) {
       const prepareOptions = { input: { mode } };
-      const preparation = await tool.prepareInvocation(prepareOptions, mockCancellationToken);
+      const preparation = await tool.prepare(prepareOptions, mockCancellationToken);
       
       assert.ok(preparation.invocationMessage.includes(mode));
       
@@ -313,7 +313,7 @@ suite('Language Model Tools Comprehensive Tests', () => {
 
     for (const context of testContexts) {
       const prepareOptions = { input: { context } };
-      const preparation = await tool.prepareInvocation(prepareOptions, mockCancellationToken);
+      const preparation = await tool.prepare(prepareOptions, mockCancellationToken);
       
       assert.ok(preparation.invocationMessage);
       

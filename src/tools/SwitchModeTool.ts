@@ -9,7 +9,7 @@ interface SwitchModeParams {
  * Tool for switching memory bank working modes
  */
 export class SwitchModeTool extends BaseMemoryBankTool<SwitchModeParams> {
-  async prepareInvocation(
+  async prepare(
     options: vscode.LanguageModelToolInvocationPrepareOptions<SwitchModeParams>,
     token: vscode.CancellationToken
   ) {

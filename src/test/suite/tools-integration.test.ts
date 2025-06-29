@@ -57,12 +57,12 @@ suite('Memory Bank Tools Integration Tests', () => {
     const tool = new UpdateContextTool();
     const testContext = 'Working on authentication system for e-commerce platform';
     
-    // Test prepareInvocation first
+    // Test prepare first
     const prepareOptions = {
       input: { context: testContext }
     };
     
-    const preparation = await tool.prepareInvocation(prepareOptions, mockToken);
+    const preparation = await tool.prepare(prepareOptions, mockToken);
     
     assert.ok(preparation.invocationMessage);
     assert.ok(preparation.invocationMessage.includes(testContext));
@@ -97,7 +97,7 @@ suite('Memory Bank Tools Integration Tests', () => {
     };
     
     const prepareOptions = { input: validInput };
-    const preparation = await tool.prepareInvocation(prepareOptions, mockToken);
+    const preparation = await tool.prepare(prepareOptions, mockToken);
     
     assert.ok(preparation.invocationMessage.includes(validInput.decision));
     assert.ok(preparation.confirmationMessages);
@@ -109,7 +109,7 @@ suite('Memory Bank Tools Integration Tests', () => {
     };
     
     const partialPrepareOptions = { input: partialInput };
-    const partialPreparation = await tool.prepareInvocation(partialPrepareOptions, mockToken);
+    const partialPreparation = await tool.prepare(partialPrepareOptions, mockToken);
     
     assert.ok(partialPreparation.invocationMessage.includes(partialInput.decision));
     
@@ -149,7 +149,7 @@ suite('Memory Bank Tools Integration Tests', () => {
     };
     
     const prepareOptions = { input: complexProgress };
-    const preparation = await tool.prepareInvocation(prepareOptions, mockToken);
+    const preparation = await tool.prepare(prepareOptions, mockToken);
     
     assert.ok(preparation.invocationMessage);
     assert.ok(preparation.confirmationMessages);
@@ -184,7 +184,7 @@ suite('Memory Bank Tools Integration Tests', () => {
     
     for (const fileName of testFiles) {
       const prepareOptions = { input: { fileName } };
-      const preparation = await tool.prepareInvocation(prepareOptions, mockToken);
+      const preparation = await tool.prepare(prepareOptions, mockToken);
       
       assert.ok(preparation.invocationMessage.includes(fileName), 
                `Should mention ${fileName} in invocation message`);
@@ -219,7 +219,7 @@ suite('Memory Bank Tools Integration Tests', () => {
     // Test each valid mode
     for (const mode of validModes) {
       const prepareOptions = { input: { mode } };
-      const preparation = await tool.prepareInvocation(prepareOptions, mockToken);
+      const preparation = await tool.prepare(prepareOptions, mockToken);
       
       assert.ok(preparation.invocationMessage.includes(mode), 
                `Should mention ${mode} in preparation`);
@@ -264,7 +264,7 @@ suite('Memory Bank Tools Integration Tests', () => {
     `;
     
     const prepareOptions = { input: { context: comprehensiveContext.trim() } };
-    const preparation = await tool.prepareInvocation(prepareOptions, mockToken);
+    const preparation = await tool.prepare(prepareOptions, mockToken);
     
     assert.ok(preparation.invocationMessage);
     assert.ok(preparation.confirmationMessages);
@@ -344,8 +344,8 @@ suite('Memory Bank Tools Integration Tests', () => {
 
     for (const tool of tools) {
       // Check that tools have required methods
-      assert.strictEqual(typeof tool.prepareInvocation, 'function', 
-                        `${tool.constructor.name} should have prepareInvocation method`);
+      assert.strictEqual(typeof tool.prepare, 'function', 
+                        `${tool.constructor.name} should have prepare method`);
       assert.strictEqual(typeof tool.invoke, 'function', 
                         `${tool.constructor.name} should have invoke method`);
     }

@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import { MemoryManager, MemoryFile } from '../../memory/MemoryManager';
 import { ModeManager } from '../../memory/modes/ModeManager';
 import { Mode } from '../../memory/modes/Mode';
-import { FILE_TEMPLATES } from '../../memory/FileTemplates';
+import { ALL_FILE_TEMPLATES } from '../../memory/FileTemplates';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
@@ -39,14 +39,7 @@ suite('Type Safety & Validation Tests', () => {
 
   test('MemoryFile type - should only accept valid memory file paths', async () => {
     // Test all valid memory file paths
-    const validPaths: MemoryFile[] = [
-      'memory-bank/activeContext.md',
-      'memory-bank/decisionLog.md',
-      'memory-bank/progress.md',
-      'memory-bank/productContext.md',
-      'memory-bank/systemPatterns.md',
-      'memory-bank/projectBrief.md'
-    ];
+    const validPaths: MemoryFile[] = Object.keys(ALL_FILE_TEMPLATES) as MemoryFile[];
 
     for (const validPath of validPaths) {
       // These should all work without TypeScript errors
@@ -61,7 +54,7 @@ suite('Type Safety & Validation Tests', () => {
 
   test('FILE_TEMPLATES - should have correct structure and types', () => {
     // Verify FILE_TEMPLATES has the expected structure
-    assert.ok(typeof FILE_TEMPLATES === 'object', 'FILE_TEMPLATES should be an object');
+    assert.ok(typeof ALL_FILE_TEMPLATES === 'object', 'ALL_FILE_TEMPLATES should be an object');
     
     const expectedFiles = [
       'memory-bank/activeContext.md',
@@ -73,10 +66,10 @@ suite('Type Safety & Validation Tests', () => {
     ];
 
     for (const expectedFile of expectedFiles) {
-      assert.ok(expectedFile in FILE_TEMPLATES, `FILE_TEMPLATES should contain ${expectedFile}`);
-      assert.ok(typeof FILE_TEMPLATES[expectedFile as MemoryFile] === 'string', 
+      assert.ok(expectedFile in ALL_FILE_TEMPLATES, `ALL_FILE_TEMPLATES should contain ${expectedFile}`);
+      assert.ok(typeof ALL_FILE_TEMPLATES[expectedFile as MemoryFile] === 'string', 
                `Template for ${expectedFile} should be a string`);
-      assert.ok(FILE_TEMPLATES[expectedFile as MemoryFile].length > 0, 
+      assert.ok(ALL_FILE_TEMPLATES[expectedFile as MemoryFile].length > 0, 
                `Template for ${expectedFile} should not be empty`);
     }
   });
@@ -93,11 +86,11 @@ suite('Type Safety & Validation Tests', () => {
 
     // Verify all file paths in mode are valid MemoryFile types
     for (const filePath of currentMode.readFiles) {
-      assert.ok(filePath in FILE_TEMPLATES, `Read file ${filePath} should be valid MemoryFile`);
+      assert.ok(filePath in ALL_FILE_TEMPLATES, `Read file ${filePath} should be valid MemoryFile`);
     }
 
     for (const filePath of currentMode.writeFiles) {
-      assert.ok(filePath in FILE_TEMPLATES, `Write file ${filePath} should be valid MemoryFile`);
+      assert.ok(filePath in ALL_FILE_TEMPLATES, `Write file ${filePath} should be valid MemoryFile`);
     }
   });
 
@@ -184,7 +177,7 @@ suite('Type Safety & Validation Tests', () => {
     for (const summary of summaries) {
       // Verify SummarisedMemory interface compliance
       assert.ok(typeof summary.path === 'string', 'Summary path should be string');
-      assert.ok(summary.path in FILE_TEMPLATES, 'Summary path should be valid MemoryFile');
+      assert.ok(summary.path in ALL_FILE_TEMPLATES, 'Summary path should be valid MemoryFile');
       assert.ok(typeof summary.summary === 'string', 'Summary summary should be string');
     }
   });

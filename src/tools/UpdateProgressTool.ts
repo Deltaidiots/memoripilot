@@ -11,7 +11,7 @@ interface UpdateProgressParams {
  * Tool for updating progress tracking in the memory bank
  */
 export class UpdateProgressTool extends BaseMemoryBankTool<UpdateProgressParams> {
-  async prepareInvocation(
+  async prepare(
     options: vscode.LanguageModelToolInvocationPrepareOptions<UpdateProgressParams>,
     token: vscode.CancellationToken
   ) {

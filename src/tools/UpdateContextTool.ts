@@ -9,7 +9,7 @@ interface UpdateContextParams {
  * Tool for updating the active context in the memory bank
  */
 export class UpdateContextTool extends BaseMemoryBankTool<UpdateContextParams> {
-  async prepareInvocation(
+  async prepare(
     options: vscode.LanguageModelToolInvocationPrepareOptions<UpdateContextParams>,
     token: vscode.CancellationToken
   ) {

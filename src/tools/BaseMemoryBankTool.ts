@@ -25,12 +25,61 @@ export abstract class BaseMemoryBankTool<T = any> implements IMemoryBankTool<T> 
   protected modeManager?: ModeManager;
 
   constructor() {
-    // Get instances from the workspace
-    const ws = vscode.workspace.workspaceFolders?.[0];
-    if (ws) {
-      this.memoryManager = MemoryManager.getInstance(ws);
-      this.modeManager = ModeManager.getInstance(this.memoryManager);
+    try {
+      // Try to use the workspace that contains our extension
+      const { WorkspaceUtil } = require('../utils/WorkspaceUtil');
+      const extensionWorkspace = WorkspaceUtil.getExtensionWorkspace();
+      
+      if (extensionWorkspace) {
+        console.log(`BaseMemoryBankTool: Found extension workspace: ${extensionWorkspace.uri.fsPath}`);
+        this.memoryManager = MemoryManager.getInstance(extensionWorkspace);
+        this.modeManager = ModeManager.getInstance(this.memoryManager);
+      } else {
+        // Log the available workspaces for debugging
+        const workspaceFolders = vscode.workspace.workspaceFolders || [];
+        console.log(`BaseMemoryBankTool: No extension workspace found. Available workspaces: ${
+          workspaceFolders.map(f => f.name + ': ' + f.uri.fsPath).join(', ')
+        }`);
+        
+        // Fall back to active editor workspace or first workspace
+        const activeWorkspace = this.getActiveEditorWorkspace() || vscode.workspace.workspaceFolders?.[0];
+        if (activeWorkspace) {
+          console.log(`BaseMemoryBankTool: Using fallback workspace: ${activeWorkspace.uri.fsPath}`);
+          this.memoryManager = MemoryManager.getInstance(activeWorkspace);
+          this.modeManager = ModeManager.getInstance(this.memoryManager);
+        } else {
+          console.error(`BaseMemoryBankTool: No workspace available`);
+        }
+      }
+    } catch (error) {
+      // If utility fails, fall back to simpler approach with better error logging
+      console.error(`BaseMemoryBankTool: Error finding extension workspace:`, error);
+      
+      // Log the available workspaces for debugging
+      const workspaceFolders = vscode.workspace.workspaceFolders || [];
+      console.log(`BaseMemoryBankTool: Available workspaces: ${
+        workspaceFolders.map(f => f.name + ': ' + f.uri.fsPath).join(', ')
+      }`);
+      
+      if (workspaceFolders.length > 0) {
+        console.log(`BaseMemoryBankTool: Using first workspace as fallback: ${workspaceFolders[0].uri.fsPath}`);
+        this.memoryManager = MemoryManager.getInstance(workspaceFolders[0]);
+        this.modeManager = ModeManager.getInstance(this.memoryManager);
+      } else {
+        console.error(`BaseMemoryBankTool: No workspace available`);
+      }
     }
+  }
+  
+  /**
+   * Gets the workspace folder for the currently active editor
+   */
+  private getActiveEditorWorkspace(): vscode.WorkspaceFolder | undefined {
+    const activeEditor = vscode.window.activeTextEditor;
+    if (activeEditor && activeEditor.document && activeEditor.document.uri) {
+      return vscode.workspace.getWorkspaceFolder(activeEditor.document.uri);
+    }
+    return undefined;
   }
 
   getMemoryManager(): MemoryManager | undefined {
@@ -51,7 +100,7 @@ export abstract class BaseMemoryBankTool<T = any> implements IMemoryBankTool<T> 
     await this.memoryManager.initialise();
   }
 
-  abstract prepareInvocation(
+  abstract prepare(
     options: vscode.LanguageModelToolInvocationPrepareOptions<T>,
     token: vscode.CancellationToken
   ): Promise<{

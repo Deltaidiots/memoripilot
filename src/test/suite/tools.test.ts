@@ -3,8 +3,9 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
-import { MemoryManager } from '../../memory/MemoryManager';
+import { MemoryManager, MemoryFile } from '../../memory/MemoryManager';
 import { ModeManager } from '../../memory/modes/ModeManager';
+import { FILE_TEMPLATES, ALL_FILE_TEMPLATES } from '../../memory/FileTemplates';
 
 suite('Memory Bank Core Test Suite', () => {
   let tempWorkspace: vscode.WorkspaceFolder;
@@ -40,12 +41,11 @@ suite('Memory Bank Core Test Suite', () => {
 
   test('Memory Bank initialization', async () => {
     // Test that memory bank was properly initialized
-    const files: (keyof typeof import('../../memory/FileTemplates').FILE_TEMPLATES)[] = [
+    const files: (keyof typeof FILE_TEMPLATES)[] = [
       'memory-bank/activeContext.md',
       'memory-bank/decisionLog.md',
       'memory-bank/progress.md',
       'memory-bank/productContext.md',
-      'memory-bank/systemPatterns.md'
     ];
     
     for (const file of files) {
@@ -88,7 +88,7 @@ suite('Memory Bank Core Test Suite', () => {
   });
 
   test('Memory Manager file operations', async () => {
-    const testFile: keyof typeof import('../../memory/FileTemplates').FILE_TEMPLATES = 'memory-bank/activeContext.md';
+    const testFile: MemoryFile = 'memory-bank/activeContext.md';
     const testContent = '# Test File\n\nThis is a test.';
     
     // Test writing content
@@ -152,16 +152,16 @@ suite('Memory Bank Core Test Suite', () => {
     modeManager.setMode('architect');
     const architectMode = modeManager.currentMode;
     assert.ok(architectMode.readFiles.includes('memory-bank/productContext.md'));
-    assert.ok(architectMode.readFiles.includes('memory-bank/systemPatterns.md'));
+    assert.ok(architectMode.readFiles.includes('memory-bank/systemPatterns.md' as MemoryFile));
     
     modeManager.setMode('code');
     const codeMode = modeManager.currentMode;
-    assert.ok(codeMode.readFiles.includes('memory-bank/activeContext.md'));
-    assert.ok(codeMode.readFiles.includes('memory-bank/progress.md'));
+    assert.ok(codeMode.readFiles.includes('memory-bank/activeContext.md' as MemoryFile));
+    assert.ok(codeMode.readFiles.includes('memory-bank/progress.md' as MemoryFile));
     
     modeManager.setMode('debug');
     const debugMode = modeManager.currentMode;
-    assert.ok(debugMode.readFiles.includes('memory-bank/decisionLog.md'));
+    assert.ok(debugMode.readFiles.includes('memory-bank/decisionLog.md' as MemoryFile));
   });
 
   test('Memory summaries', async () => {

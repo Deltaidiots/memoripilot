@@ -1,0 +1,14 @@
+
+> memory-bank-copilot@0.1.0 compile
+> npm run check-types && npm run lint && node esbuild.js
+
+
+> memory-bank-copilot@0.1.0 check-types
+> tsc --noEmit
+
+
+> memory-bank-copilot@0.1.0 lint
+> eslint src
+
+[watch] build started
+[watch] build finished

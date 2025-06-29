@@ -1,13 +1,84 @@
 export const FILE_TEMPLATES = Object.freeze({
-  "memory-bank/productContext.md": "# Product Context\n\nDescribe the product.\n\n## Overview\n\nProvide a high-level overview of the project.\n\n## Core Features\n\n- Feature 1\n- Feature 2\n\n## Technical Stack\n\n- Tech 1\n- Tech 2",
-  
-  "memory-bank/progress.md": "# Progress\n\n## Done\n\n- [x] Initialize project\n\n## Doing\n\n- [ ] Current task\n\n## Next\n\n- [ ] Upcoming task",
-  
-  "memory-bank/decisionLog.md": "# Decision Log\n\n| Date | Decision | Rationale |\n|------|----------|-----------|\n",
-  
-  "memory-bank/activeContext.md": "# Active Context\n\n## Current Goals\n\n- Goal 1\n\n## Current Blockers\n\n- None yet",
-  
-  "memory-bank/projectBrief.md": "# Project Brief\n\n## Purpose\n\nDefine the main purpose of this project.\n\n## Target Users\n\nDescribe who will use this.\n\n## Success Metrics\n\nHow will success be measured?",
-  
-  "memory-bank/systemPatterns.md": "# System Patterns\n\n## Architectural Patterns\n\n- Pattern 1: Description\n\n## Design Patterns\n\n- Pattern 1: Description\n\n## Common Idioms\n\n- Idiom 1: Description"
+  "memory-bank/productContext.md": `# Product Context
+
+Describe the product.
+
+## Overview
+
+Provide a high-level overview of the project.
+
+## Core Features
+
+- Feature 1
+- Feature 2
+
+## Technical Stack
+
+- Tech 1
+- Tech 2`,
+
+  "memory-bank/progress.md": `# Progress
+
+## Done
+
+- [x] Initialize project
+
+## Doing
+
+- [ ] Current task
+
+## Next
+
+- [ ] Upcoming task`,
+
+  "memory-bank/decisionLog.md": `# Decision Log
+
+| Date | Decision | Rationale |
+|------|----------|-----------|
+`,
+
+  "memory-bank/activeContext.md": `# Active Context
+
+## Current Goals
+
+- Goal 1
+
+## Current Blockers
+
+- None yet`,
+});
+
+export const OPTIONAL_FILE_TEMPLATES = Object.freeze({
+  "memory-bank/projectBrief.md": `# Project Brief
+
+## Purpose
+
+Define the main purpose of this project.
+
+## Target Users
+
+Describe who will use this.
+
+## Success Metrics
+
+How will success be measured?`,
+
+  "memory-bank/systemPatterns.md": `# System Patterns
+
+## Architectural Patterns
+
+- Pattern 1: Description
+
+## Design Patterns
+
+- Pattern 1: Description
+
+## Common Idioms
+
+- Idiom 1: Description`,
+});
+
+export const ALL_FILE_TEMPLATES = Object.freeze({
+  ...FILE_TEMPLATES,
+  ...OPTIONAL_FILE_TEMPLATES,
 });
