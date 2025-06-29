@@ -1,19 +1,32 @@
-# Memory Bank for GitHub Copilot
+# MemoriPilot
 
 <div align="center">
 
-![Memory Bank Logo](https://raw.githubusercontent.com/Deltaidiots/memory-bank-copilot/main/resources/memory-bank-icon.png)
+![MemoriPilot Logo](https://raw.githubusercontent.com/Deltaidiots/memoripilot/main/resources/memory-bank-icon.png)
 
-[![VS Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/gujjar19.memory-bank-copilot?style=flat-square&label=VS%20Marketplace&logo=visual-studio-code)](https://marketplace.visualstudio.com/items?itemName=gujjar19.memory-bank-copilot)
-[![Installs](https://img.shields.io/visual-studio-marketplace/i/gujjar19.memory-bank-copilot?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=gujjar19.memory-bank-copilot)
-[![Rating](https://img.shields.io/visual-studio-marketplace/r/gujjar19.memory-bank-copilot?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=gujjar19.memory-bank-copilot)
+[![VS Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/gujjar19.memoripilot?style=flat-square&label=VS%20Marketplace&logo=visual-studio-code)](https://marketplace.visualstudio.com/items?itemName=gujjar19.memoripilot)
+[![Installs](https://img.shields.io/visual-studio-marketplace/i/gujjar19.memoripilot?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=gujjar19.memoripilot)
+[![Rating](https://img.shields.io/visual-studio-marketplace/r/gujjar19.memoripilot?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=gujjar19.memoripilot)
 [![License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE)
 
 </div>
 
-Memory Bank provides seamless, persistent context and knowledge management for GitHub Copilot Chat using VS Code's Language Model Tools API.
+**Give Copilot a memory!** MemoriPilot provides seamless, persistent context management that makes Copilot aware of your project decisions, progress, and architectural patterns - dramatically improving the relevance and quality of AI assistance.
 
-![Memory Bank in Action](https://raw.githubusercontent.com/Deltaidiots/memory-bank-copilot/main/resources/demo-screenshot.png)
+![MemoriPilot in Action](https://raw.githubusercontent.com/Deltaidiots/memoripilot/main/resources/demo-screenshot.png)
+
+> "The biggest limitation of AI coding assistants is context - Memory Bank solves this by maintaining persistent project knowledge that survives across sessions."
+
+## ⭐ Why MemoriPilot?
+
+**Problem**: Copilot loses context between sessions and has limited awareness of your project's big picture.
+
+**Solution**: MemoriPilot creates and maintains a structured knowledge base about your project that:
+- Persists across all coding sessions
+- Captures important decisions and their rationale
+- Tracks project progress and priorities
+- Documents system architecture and patterns
+- Is automatically updated as your project evolves
 
 ## ✨ Features
 

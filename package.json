@@ -1,7 +1,7 @@
 {
-  "name": "memory-bank-copilot",
-  "displayName": "Memory Bank for GitHub Copilot",
-  "description": "Native GitHub Copilot integration with persistent memory and context using Language Model Tools API",
+  "name": "memoripilot",
+  "displayName": "MemoriPilot",
+  "description": "Project memory for Copilot - Supercharge Copilot with persistent context awareness that remembers decisions, tracks progress, and provides consistent project knowledge",
   "version": "0.1.0",
   "publisher": "gujjar19",
   "author": {
@@ -10,7 +10,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Deltaidiots/memory-bank-copilot"
+    "url": "https://github.com/Deltaidiots/memoripilot"
   },
   "engines": {
     "vscode": "^1.101.0"
@@ -18,16 +18,30 @@
   "categories": [
     "Programming Languages",
     "Machine Learning",
-    "Other"
+    "Other",
+    "Snippets",
+    "Education",
+    "Formatters"
   ],
   "keywords": [
     "copilot",
-    "github",
     "memory",
     "context",
-    "ai"
+    "ai",
+    "productivity",
+    "assistant",
+    "knowledge-management",
+    "documentation",
+    "context-awareness",
+    "persistent-memory",
+    "decision-log",
+    "project-memory",
+    "chat",
+    "gpt",
+    "memoripilot",
+    "project-context"
   ],
-  "icon": "resources/memory-bank-icon.png",
+  "icon": "resources/memoripilot-icon.png",
   "activationEvents": [
     "onChat:memory",
     "onLanguageModelTool:memory_bank_update_context",

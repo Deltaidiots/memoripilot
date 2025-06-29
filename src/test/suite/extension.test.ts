@@ -6,13 +6,13 @@ import * as os from 'os';
 
 suite('Extension Test Suite', () => {
   test('Extension should be present', () => {
-    assert.ok(vscode.extensions.getExtension('asadbek064.memory-bank-copilot'));
+    assert.ok(vscode.extensions.getExtension('gujjar19.memoripilot'));
   });
 
   test('Extension should activate', async function() {
     this.timeout(10000); // 10 second timeout for activation
     
-    const extension = vscode.extensions.getExtension('asadbek064.memory-bank-copilot');
+    const extension = vscode.extensions.getExtension('gujjar19.memoripilot');
     assert.ok(extension);
     
     // Activate the extension
@@ -23,7 +23,7 @@ suite('Extension Test Suite', () => {
   test('Commands should be registered', async function() {
     this.timeout(10000);
     
-    const extension = vscode.extensions.getExtension('asadbek064.memory-bank-copilot');
+    const extension = vscode.extensions.getExtension('gujjar19.memoripilot');
     assert.ok(extension);
     await extension.activate();
     
@@ -38,7 +38,7 @@ suite('Extension Test Suite', () => {
   test('Language Model Tools should be registered', async function() {
     this.timeout(10000);
     
-    const extension = vscode.extensions.getExtension('asadbek064.memory-bank-copilot');
+    const extension = vscode.extensions.getExtension('gujjar19.memoripilot');
     assert.ok(extension);
     await extension.activate();
     
@@ -50,7 +50,7 @@ suite('Extension Test Suite', () => {
   test('Status bar should be created', async function() {
     this.timeout(10000);
     
-    const extension = vscode.extensions.getExtension('asadbek064.memory-bank-copilot');
+    const extension = vscode.extensions.getExtension('gujjar19.memoripilot');
     assert.ok(extension);
     await extension.activate();
     
@@ -62,7 +62,7 @@ suite('Extension Test Suite', () => {
   test('Chat participant should be registered', async function() {
     this.timeout(10000);
     
-    const extension = vscode.extensions.getExtension('asadbek064.memory-bank-copilot');
+    const extension = vscode.extensions.getExtension('gujjar19.memoripilot');
     assert.ok(extension);
     await extension.activate();
     

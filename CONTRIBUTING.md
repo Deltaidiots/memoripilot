@@ -1,20 +1,20 @@
-# Contributing to Memory Bank for GitHub Copilot
+# Contributing to MemoriPilot
 
-First off, thank you for considering contributing to Memory Bank! It's people like you that make this extension better for everyone.
+First off, thank you for considering contributing to MemoriPilot! It's people like you that make this extension better for everyone.
 
 ## Getting Started
 
 Before you begin:
 - Make sure you have a [GitHub account](https://github.com/signup)
-- [Fork the repository](https://github.com/Deltaidiots/memory-bank-copilot/fork) on GitHub
+- [Fork the repository](https://github.com/Deltaidiots/memoripilot/fork) on GitHub
 - Familiarize yourself with [VS Code extension development](https://code.visualstudio.com/api)
 
 ## Development Environment Setup
 
 1. Clone your fork locally:
    ```bash
-   git clone https://github.com/YOUR-USERNAME/memory-bank-copilot.git
-   cd memory-bank-copilot
+   git clone https://github.com/YOUR-USERNAME/memoripilot.git
+   cd memoripilot
    ```
 
 2. Install dependencies:
@@ -64,7 +64,7 @@ Before you begin:
    git push origin feature/your-feature-name
    ```
 
-2. [Submit a pull request](https://github.com/Deltaidiots/memory-bank-copilot/compare) from your branch to our `main` branch.
+2. [Submit a pull request](https://github.com/Deltaidiots/memoripilot/compare) from your branch to our `main` branch.
 
 3. Wait for the maintainers to review your PR. We'll provide feedback as soon as possible.
 

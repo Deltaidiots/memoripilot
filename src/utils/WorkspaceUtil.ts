@@ -51,7 +51,7 @@ export class WorkspaceUtil {
             
             // Find which workspace contains this directory
             for (const folder of workspaceFolders) {
-                if (extensionRoot.startsWith(folder.uri.fsPath) || folder.uri.fsPath.includes('memory-bank-copilot')) {
+                if (extensionRoot.startsWith(folder.uri.fsPath) || folder.uri.fsPath.includes('memoripilot')) {
                     console.log(`WorkspaceUtil: Found extension workspace by path matching: ${folder.uri.fsPath}`);
                     return folder;
                 }
@@ -63,7 +63,7 @@ export class WorkspaceUtil {
         // If path matching failed, try other methods
         // First, try to find by extension ID
         try {
-            const extension = vscode.extensions.getExtension('asadbek064.memory-bank-copilot');
+            const extension = vscode.extensions.getExtension('gujjar19.memoripilot');
             if (extension) {
                 // The extension is installed and active
                 // Now find which workspace folder contains our extension code
@@ -73,7 +73,7 @@ export class WorkspaceUtil {
                         // Try reading package.json to check if it's our extension
                         if (fs.existsSync(packageJsonPath)) {
                             const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-                            if (packageJson.name === 'memory-bank-copilot') {
+                            if (packageJson.name === 'memoripilot') {
                                 console.log(`WorkspaceUtil: Found extension workspace by package.json: ${folder.uri.fsPath}`);
                                 return folder;
                             }
@@ -88,7 +88,7 @@ export class WorkspaceUtil {
         }
         
         // Add a hardcoded check for our specific workspace path
-        const hardcodedPath = '/home/asad/dev/memory-bank-copilot';
+        const hardcodedPath = '/home/asad/dev/memoripilot';
         for (const folder of workspaceFolders) {
             if (folder.uri.fsPath === hardcodedPath) {
                 console.log(`WorkspaceUtil: Found extension workspace by hardcoded path: ${folder.uri.fsPath}`);
@@ -129,7 +129,7 @@ export class WorkspaceUtil {
                 }
                 
                 // Also check if the path contains our extension name as a fallback
-                if (folder.uri.fsPath.includes('memory-bank-copilot')) {
+                if (folder.uri.fsPath.includes('memoripilot')) {
                     console.log(`WorkspaceUtil: Found extension workspace by path: ${folder.uri.fsPath}`);
                     return folder;
                 }

@@ -89,7 +89,7 @@ export class AnalyzerRegistry {
             const extensionRoot = __dirname.split('out')[0];
             
             for (const folder of workspaceFolders) {
-                if (folder.uri.fsPath.includes('memory-bank-copilot')) {
+                if (folder.uri.fsPath.includes('memoripilot')) {
                     console.log(`AnalyzerRegistry: Selected extension workspace: ${folder.name}`);
                     return folder;
                 }

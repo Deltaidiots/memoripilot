@@ -25,9 +25,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
-          release_name: Memory Bank for GitHub Copilot ${{ github.ref }}
+          release_name: MemoriPilot ${{ github.ref }}
           body: |
-            Please see the [CHANGELOG.md](https://github.com/Deltaidiots/memory-bank-copilot/blob/main/CHANGELOG.md) for details.
+            Please see the [CHANGELOG.md](https://github.com/Deltaidiots/memoripilot/blob/main/CHANGELOG.md) for details.
           draft: false
           prerelease: false
           
@@ -37,6 +37,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./memory-bank-copilot-${{ github.ref_name }}.vsix
-          asset_name: memory-bank-copilot-${{ github.ref_name }}.vsix
+          asset_path: ./memoripilot-${{ github.ref_name }}.vsix
+          asset_name: memoripilot-${{ github.ref_name }}.vsix
           asset_content_type: application/octet-stream
