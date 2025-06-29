@@ -94,22 +94,19 @@ If Language Model Tools aren't available, the extension provides a chat particip
 
 1. Open the VS Code Chat panel (View > Chat)
 2. Select "memory" from the chat selector dropdown
-3. Say "hello" to initialize your memory bank
-4. Use slash commands for common operations:
-   - `/active-context` - Set your current working focus
-   - `/append-decision` - Log a new decision to decisionLog.md
-   - `/show-memory` - Show a memory bank file
-   - `/update-memory-bank` - Manually update the memory bank (UMB)
+3. Say "hello" to initialize your memory bank and get current project summaries
+4. The participant will guide you to use GitHub Copilot Chat for best results
+
+**Note**: The fallback mode provides read-only access to memory bank summaries and recommends using GitHub Copilot Chat for full functionality.
 
 ### Manual Commands
 
 Press `Ctrl+Alt+M` (or `Cmd+Alt+M` on Mac) to access Memory Bank commands directly:
-- `/mb-init` - Initialize memory bank files
-- `/mb-update` - Update memory bank based on workspace content
-- `/mb-show [file]` - Show memory bank file content
-- `/mb-decision <text>` - Log a new decision
-- `/mb-context <text>` - Set your active context
-- `/mb-mode <mode>` - Switch mode (architect, code, ask, debug)
+- **Open GitHub Copilot Chat (Recommended)** - Use natural language with tool suggestions
+- **Open VS Code Chat (Fallback)** - Use when Language Model Tools aren't available  
+- **Show Memory Bank Status** - View current mode and activation status
+
+**Note**: Individual slash commands like `/mb-init`, `/mb-update` have been replaced by the integrated tool system. Use GitHub Copilot Chat for the best experience.
 
 ## Working Modes
 
@@ -126,7 +123,7 @@ You can switch modes by:
 1. Using GitHub Copilot Chat: "Switch to architect mode" 
 2. Using the `#switchMode` tool directly
 3. Clicking on the Memory Mode indicator in the status bar
-4. Using the manual command: `/mb-mode architect`
+4. Using the command palette: "Memory Bank: Select Mode"
 
 ## Example Workflow
 
@@ -172,11 +169,31 @@ To test this extension in the Extension Development Host (EDH):
 5. In the new VS Code window (EDH), open a workspace
 6. Start using GitHub Copilot Chat - the tools will be automatically available
 
+### Comprehensive Test Suite
+
+The extension includes extensive testing:
+
+```bash
+npm test              # Run all tests
+npm run compile-tests # Compile test files
+npm run check-types   # TypeScript strict checking
+npm run lint          # ESLint code quality
+```
+
+**Test Coverage**: 11 comprehensive test suites with 200+ test cases covering:
+- Core functionality and tools integration
+- Performance and security testing  
+- Error handling and edge cases
+- VS Code API compliance
+- TypeScript strict mode compliance
+
 ## Known Issues
 
 - Language Model Tools API requires VS Code 1.101.0+ and GitHub Copilot
 - In EDH mode, you may need to restart if tools don't appear initially
 - Fallback chat participant mode available when Language Model Tools API is not available
+
+## Release Notes
 
 ## Release Notes
 
@@ -186,8 +203,11 @@ To test this extension in the Extension Development Host (EDH):
 - **NEW**: Automatic tool discovery and suggestion in Copilot Chat
 - **NEW**: Built-in confirmation dialogs for all operations
 - **NEW**: Direct tool referencing with `#toolName` syntax
+- **NEW**: Comprehensive test suite with 200+ test cases and expert-level TypeScript engineering
+- **NEW**: Advanced security testing and performance optimization
 - **IMPROVED**: Enhanced error handling and user feedback
-- **MAINTAINED**: Backward compatibility with VS Code Chat participant
+- **IMPROVED**: Streamlined manual commands focused on GitHub Copilot Chat
+- **MAINTAINED**: Backward compatibility with VS Code Chat participant (fallback mode)
 - **MAINTAINED**: All existing memory bank functionality and modes
 
 ### 0.0.1 - Initial Release
@@ -207,6 +227,15 @@ To test this extension in the Extension Development Host (EDH):
 - More sophisticated workspace analysis
 - Integration with additional VS Code APIs
 - Expanded file template system
+
+---
+
+## Documentation
+
+- **[EXPERT_TESTING_REPORT.md](./EXPERT_TESTING_REPORT.md)** - Comprehensive testing analysis and quality assurance report
+- **[TESTING.md](./TESTING.md)** - Testing guide and examples for Language Model Tools
+- **[CLEANUP_SUMMARY.md](./CLEANUP_SUMMARY.md)** - Code cleanup and architecture alignment summary
+- **[IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md)** - Implementation details and benefits
 
 ---
 

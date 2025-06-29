@@ -56,26 +56,46 @@ export class MemoryManager extends EventEmitter {
    * @returns {Promise<void>}
    */
   public async initialise(): Promise<void> {
+    console.log("MemoryManager: Beginning initialization...");
     const rootUri = this.pathUri("memory-bank");
-    await vscode.workspace.fs.createDirectory(rootUri);
+    console.log(`MemoryManager: Creating directory at ${rootUri.toString()}`);
+    
+    try {
+      await vscode.workspace.fs.createDirectory(rootUri);
+      console.log("MemoryManager: Root directory created or verified");
+    } catch (err) {
+      console.error("MemoryManager: Failed to create directory:", err);
+      throw err;
+    }
     
     // Create each file if it doesn't exist
-    await Promise.all(
-      Object.entries(FILE_TEMPLATES).map(async ([path, template]) => {
-        const fileUri = this.pathUri(path);
+    console.log("MemoryManager: Creating/checking files from templates");
+    
+    for (const [path, template] of Object.entries(FILE_TEMPLATES)) {
+      const fileUri = this.pathUri(path);
+      console.log(`MemoryManager: Processing ${path} at ${fileUri.toString()}`);
+      
+      try {
+        await vscode.workspace.fs.stat(fileUri);
+        console.log(`MemoryManager: ${path} exists, reading content`);
+        
+        // File exists, read it to cache
+        const content = await this.readFile(path as MemoryFile);
+        this.fileCache.set(path, content);
+        console.log(`MemoryManager: Cached content for ${path}, length: ${content.length}`);
+      } catch {
+        console.log(`MemoryManager: ${path} does not exist, creating it`);
+        // File doesn't exist, create it
         try {
-          await vscode.workspace.fs.stat(fileUri);
-          
-          // File exists, read it to cache
-          const content = await this.readFile(path as MemoryFile);
-          this.fileCache.set(path, content);
-        } catch {
-          // File doesn't exist, create it
           await vscode.workspace.fs.writeFile(fileUri, Buffer.from(template));
+          console.log(`MemoryManager: Created ${path}`);
           this.fileCache.set(path, template);
+        } catch (writeErr) {
+          console.error(`MemoryManager: Failed to write ${path}:`, writeErr);
+          throw writeErr;
         }
-      })
-    );
+      }
+    }
     
     // Start watching files
     this.startWatching();
@@ -151,14 +171,18 @@ export class MemoryManager extends EventEmitter {
   }
 
   /**
-   * Updates the active context with new focus.
-   * @param context The context to set
+   * Updates the active context file with new content.
+   * @param {string} context The new context to write to the file.
    */
   public async updateActiveContext(context: string): Promise<void> {
-    const date = new Date().toISOString().split('T')[0];
-    const content = `\n## Current Focus (${date})\n${context}\n`;
-    await this.appendToFile('memory-bank/activeContext.md', content);
-    this.emit('contextUpdated', context);
+    console.log(`MemoryManager: Attempting to update active context`);
+    try {
+      await this.writeFile('memory-bank/activeContext.md' as MemoryFile, context);
+      console.log(`MemoryManager: Successfully updated active context`);
+    } catch (error) {
+      console.error(`MemoryManager: FAILED to write active context:`, error);
+      throw new Error(`Failed to update active context: ${error}`);
+    }
   }
 
   /**
@@ -169,7 +193,7 @@ export class MemoryManager extends EventEmitter {
   public async logDecision(decision: string, rationale?: string): Promise<void> {
     const date = new Date().toISOString().split('T')[0];
     const row = `| ${date} | ${decision} | ${rationale || '-'} |\n`;
-    await this.appendToFile('memory-bank/decisionLog.md', row);
+    await this.appendToFile('memory-bank/decisionLog.md' as MemoryFile, row);
     this.emit('decisionLogged', {decision, rationale});
   }
 
@@ -189,7 +213,7 @@ export class MemoryManager extends EventEmitter {
       `## Doing\n\n${formatItems(doing)}\n\n` +
       `## Next\n\n${formatItems(next)}\n`;
     
-    await this.writeFile('memory-bank/progress.md', content);
+    await this.writeFile('memory-bank/progress.md' as MemoryFile, content);
     this.emit('progressUpdated', {done, doing, next});
   }
 

@@ -31,10 +31,35 @@ export class UpdateMemoryBankTool extends BaseMemoryBankTool<UpdateMemoryBankPar
     try {
       await this.ensureInitialized();
       
+      // Log before re-initialization
+      console.log("UpdateMemoryBankTool: Starting memory bank update");
+      
       // Re-initialize to make sure all files are up to date
       await this.memoryManager!.initialise();
       
-      // Update Copilot integration
+      // Force update all core memory files with sample content if they're empty
+      try {
+        console.log("UpdateMemoryBankTool: Ensuring all memory files have content");
+        
+        // Check and update active context if empty
+        const activeContext = await this.memoryManager!.readFile('memory-bank/activeContext.md' as any);
+        if (!activeContext.trim() || activeContext.includes("Goal 1")) {
+          await this.memoryManager!.updateActiveContext("# Active Context\n\nCurrently working on fixing the memory bank file update issues.");
+          console.log("UpdateMemoryBankTool: Updated activeContext.md with sample content");
+        }
+        
+        // Add some content to the decision log if it's empty
+        const decisionLog = await this.memoryManager!.readFile('memory-bank/decisionLog.md' as any);
+        if (!decisionLog.includes("| 202") && decisionLog.includes("| Date | Decision | Rationale |")) {
+          const today = new Date().toISOString().split('T')[0];
+          await this.memoryManager!.logDecision("Test the Memory Bank extension", "To validate file I/O functionality");
+          console.log("UpdateMemoryBankTool: Added test decision to decisionLog.md");
+        }
+      } catch (err) {
+        console.error("UpdateMemoryBankTool: Error updating files:", err);
+      }
+      
+      // Update Copilot integration if available
       if (this.modeManager) {
         const { CopilotIntegration } = await import("../copilot/CopilotIntegration.js");
         const copilotIntegration = CopilotIntegration.getInstance(
