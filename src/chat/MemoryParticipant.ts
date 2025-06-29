@@ -1,18 +1,16 @@
 import * as vscode from "vscode";
 import { MemoryManager, MemoryContentChangeEvent } from "../memory/MemoryManager";
 import { ModeManager } from "../memory/modes/ModeManager";
-import { SessionManager } from "../memory/SessionManager";
 import { Mode } from "../memory/modes/Mode";
 
 /**
  * Represents the Memory Bank chat participant.
+ * This serves as a fallback when Language Model Tools API is not available.
  */
 export class MemoryParticipant {
   public readonly id = "memory-bank";
   private memoryManager?: MemoryManager;
   private modeManager?: ModeManager;
-  private sessionManager?: SessionManager;
-  private activeSessions: Map<string, string> = new Map();
   
   /**
    * Initialize the managers needed for the participant.
@@ -29,14 +27,6 @@ export class MemoryParticipant {
     
     if (!this.modeManager) {
       this.modeManager = ModeManager.getInstance(this.memoryManager);
-    }
-    
-    if (!this.sessionManager) {
-      this.sessionManager = SessionManager.getInstance(
-        workspace, 
-        this.memoryManager, 
-        this.modeManager
-      );
     }
   }
   
@@ -91,28 +81,9 @@ export class MemoryParticipant {
     // Initialize the managers if needed
     await this.initialize(ws);
     
-    if (!this.memoryManager || !this.modeManager || !this.sessionManager) {
+    if (!this.memoryManager || !this.modeManager) {
       stream.markdown("Failed to initialize Memory Bank services.");
       return { commands: [] };
-    }
-    
-    // Generate a unique identifier for this conversation
-    const conversationId = `chat-${Date.now()}`;
-    
-    // Track the chat session
-    let sessionId = this.activeSessions.get(conversationId);
-    if (!sessionId) {
-      // Create a new session if this is a new conversation
-      sessionId = this.sessionManager.createSession(request);
-      this.activeSessions.set(conversationId, sessionId);
-    } else {
-      // Add message to existing session
-      this.sessionManager.addMessage(
-        sessionId, 
-        request.prompt, 
-        undefined,
-        undefined
-      );
     }
     
     // Detect and switch mode based on prompt
@@ -127,8 +98,9 @@ export class MemoryParticipant {
     );
 
     try {
-      stream.markdown(`# Memory Bank (${currentMode.name} Mode)\n\n`);
+      stream.markdown(`# Memory Bank (${currentMode.name} Mode) - Fallback Chat\n\n`);
       stream.markdown(`${currentMode.description}\n\n`);
+      stream.markdown("**Note**: This is fallback mode. For the best experience, use GitHub Copilot Chat where Memory Bank tools are automatically available.\n\n");
       
       // Show relevant summaries based on mode
       if (modeSummaries.length > 0) {
@@ -143,29 +115,22 @@ export class MemoryParticipant {
       }
       
       // Show instructions for GitHub Copilot Chat
-      stream.markdown("## Using Memory Bank with GitHub Copilot Chat\n\n");
-      stream.markdown("Type these commands directly in GitHub Copilot Chat:\n\n");
-      stream.markdown("- `/mb-init` - Initialize memory bank files\n");
-      stream.markdown("- `/mb-update` - Update memory bank based on workspace\n");
-      stream.markdown("- `/mb-show [file]` - Show memory bank file\n");
-      stream.markdown("- `/mb-decision <text>` - Log a new decision\n");
-      stream.markdown("- `/mb-context <text>` - Set your active context\n");
-      stream.markdown("- `/mb-mode <mode>` - Switch mode (architect, code, ask, debug)\n");
-      stream.markdown("- `/mb-help` - Show all commands\n\n");
+      stream.markdown("## Recommended: Use GitHub Copilot Chat\n\n");
+      stream.markdown("For best results, use GitHub Copilot Chat where Memory Bank tools are integrated:\n\n");
+      stream.markdown("- Just say \"I'm working on the authentication system\" and Copilot will suggest using Memory Bank tools\n");
+      stream.markdown("- Tools like `#updateContext`, `#logDecision`, `#updateProgress` are automatically available\n");
+      stream.markdown("- No need to remember commands - just talk naturally!\n\n");
       
-      stream.markdown("You can also press `Ctrl+Shift+P` and type \"Memory Bank: Run Command\" to access all commands.\n");
+      stream.markdown("## Manual Commands (Fallback)\n\n");
+      stream.markdown("If needed, you can use these VS Code commands:\n\n");
+      stream.markdown("- `Ctrl+Shift+P` → \"Memory Bank: Select Mode\" - Switch working mode\n");
+      stream.markdown("- `Ctrl+Alt+M` → Manual command input\n");
+      
     } catch (error) {
       console.error("Error responding with summaries:", error);
       stream.markdown("Sorry, I encountered an error trying to generate a response.");
     }
 
-    const availableCommands = [
-      "memoryBank.setActiveContext",
-      "memoryBank.appendDecision",
-      "memoryBank.showMemory",
-      "memoryBank.updateMemoryBank" 
-    ];
-
-    return { commands: availableCommands };
+    return { commands: [] };
   }
 }

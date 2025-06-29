@@ -169,62 +169,12 @@
         "title": "Memory Bank: Test Activation"
       },
       {
-        "command": "memoryBank.appendDecision",
-        "title": "Memory Bank: Append Decision"
-      },
-      {
-        "command": "memoryBank.setActiveContext",
-        "title": "Memory Bank: Set Active Context"
-      },
-      {
-        "command": "memoryBank.showMemory",
-        "title": "Memory Bank: Show Memory"
-      },
-      {
-        "command": "memoryBank.updateMemoryBank",
-        "title": "Memory Bank: Update Memory Bank (UMB)"
-      },
-      {
         "command": "memoryBank.selectMode",
         "title": "Memory Bank: Select Mode"
       },
       {
-        "command": "memoryBank.copilotContext",
-        "title": "Memory Bank: Copy Context to GitHub Copilot"
-      },
-      {
         "command": "memoryBank.processCommand",
         "title": "Memory Bank: Run Command"
-      },
-      {
-        "command": "memoryBank.registerCopilotCommand",
-        "title": "Memory Bank: Copy Command for GitHub Copilot Chat"
-      }
-    ],
-    "chatParticipantCommands": [
-      {
-        "command": "memoryBank.appendDecision",
-        "name": "append-decision",
-        "description": "Log a new decision to decisionLog.md",
-        "when": "chatRequestId =~ /memory-bank/"
-      },
-      {
-        "command": "memoryBank.setActiveContext",
-        "name": "active-context",
-        "description": "Set your current working focus",
-        "when": "chatRequestId =~ /memory-bank/"
-      },
-      {
-        "command": "memoryBank.showMemory",
-        "name": "show-memory",
-        "description": "Show a memory bank file",
-        "when": "chatRequestId =~ /memory-bank/"
-      },
-      {
-        "command": "memoryBank.updateMemoryBank",
-        "name": "update-memory-bank",
-        "description": "Manually update the memory bank (UMB)",
-        "when": "chatRequestId =~ /memory-bank/"
       }
     ]
   },
@@ -240,7 +190,9 @@
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "test": "node ./out/test/suite/index.js",
+    "test:unit": "npm run compile-tests && node ./out/test/suite/tools.test.js",
+    "test:extension": "npm run compile-tests && node ./out/test/suite/extension.test.js"
   },
   "devDependencies": {
     "@types/vscode": "^1.101.0",
