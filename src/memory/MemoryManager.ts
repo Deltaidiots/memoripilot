@@ -240,16 +240,39 @@ export class MemoryManager extends EventEmitter {
   }
 
   /**
-   * Updates the active context file with new content.
-   * @param {string} context The new context to write to the file.
+   * Updates only the 'Current Goals' section of the active context file, preserving the template.
+   * @param {string} context The new goals to write (can be multiline, will be split into list items).
    */
   public async updateActiveContext(context: string): Promise<void> {
-    console.log(`MemoryManager: Attempting to update active context`);
+    console.log(`MemoryManager: Attempting to update active context (Current Goals section only)`);
     try {
-      await this.writeFile('memory-bank/activeContext.md' as MemoryFile, context);
-      console.log(`MemoryManager: Successfully updated active context`);
+      const filePath = 'memory-bank/activeContext.md' as MemoryFile;
+      let content = await this.readFile(filePath);
+      // Fallback to template if file is empty
+      if (!content.trim()) {
+        content = FILE_TEMPLATES["memory-bank/activeContext.md"];
+      }
+      // Find section boundaries
+      const lines = content.split(/\r?\n/);
+      const startIdx = lines.findIndex(l => l.trim() === '## Current Goals');
+      const endIdx = lines.findIndex((l, i) => i > startIdx && l.startsWith('## '));
+      if (startIdx === -1) {
+        throw new Error("Template missing '## Current Goals' section");
+      }
+      // Prepare new goals as list items
+      const newGoals = context
+        .split(/\r?\n/)
+        .map(line => line.trim())
+        .filter(Boolean)
+        .map(goal => `- ${goal}`);
+      // Replace section
+      const before = lines.slice(0, startIdx + 1);
+      const after = endIdx !== -1 ? lines.slice(endIdx) : [];
+      const updated = [...before, '', ...newGoals, '', ...after].join('\n');
+      await this.writeFile(filePath, updated);
+      console.log(`MemoryManager: Successfully updated Current Goals in active context`);
     } catch (error) {
-      console.error(`MemoryManager: FAILED to write active context:`, error);
+      console.error(`MemoryManager: FAILED to update Current Goals:`, error);
       throw new Error(`Failed to update active context: ${error}`);
     }
   }

@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { BaseMemoryBankTool } from "./BaseMemoryBankTool";
-import { MemoryFile } from "../memory/MemoryManager";
+import { MemoryManager, MemoryFile } from "../memory/MemoryManager";
+import { ModeManager } from "../memory/modes/ModeManager";
 
 interface ShowMemoryParams {
   fileName: string;
@@ -10,18 +11,22 @@ interface ShowMemoryParams {
  * Tool for showing memory bank file contents
  */
 export class ShowMemoryTool extends BaseMemoryBankTool<ShowMemoryParams> {
+  constructor(memoryManager: MemoryManager, modeManager: ModeManager) {
+    super(memoryManager, modeManager);
+  }
+
   async prepare(
     options: vscode.LanguageModelToolInvocationPrepareOptions<ShowMemoryParams>,
     token: vscode.CancellationToken
   ) {
     const fileName = options.input.fileName;
-    
+
     return {
       invocationMessage: `Showing content of ${fileName}`,
       confirmationMessages: {
-        title: 'Show Memory File',
-        message: new vscode.MarkdownString(`Display content of **${fileName}**?`)
-      }
+        title: "Show Memory File",
+        message: new vscode.MarkdownString(`Display content of **${fileName}**?`),
+      },
     };
   }
 
@@ -31,27 +36,27 @@ export class ShowMemoryTool extends BaseMemoryBankTool<ShowMemoryParams> {
   ): Promise<vscode.LanguageModelToolResult> {
     try {
       await this.ensureInitialized();
-      
+
       const fileName = options.input.fileName;
-      
+
       // Map the fileName to the full path
       const fullPath = `memory-bank/${fileName}` as MemoryFile;
-      
+
       // Read the file content
       const content = await this.memoryManager!.readFile(fullPath);
-      
+
       if (!content.trim()) {
         return new vscode.LanguageModelToolResult([
-          new vscode.LanguageModelTextPart(`📄 ${fileName} is empty or contains only the template.`)
+          new vscode.LanguageModelTextPart(`📄 ${fileName} is empty or contains only the template.`),
         ]);
       }
-      
+
       return new vscode.LanguageModelToolResult([
-        new vscode.LanguageModelTextPart(`📄 **${fileName}**:\n\n\`\`\`markdown\n${content}\n\`\`\``)
+        new vscode.LanguageModelTextPart(`📄 **${fileName}**:\n\n\`\`\`markdown\n${content}\n\`\`\``),
       ]);
     } catch (error) {
       return new vscode.LanguageModelToolResult([
-        new vscode.LanguageModelTextPart(`❌ Failed to read ${options.input.fileName}: ${error}`)
+        new vscode.LanguageModelTextPart(`❌ Failed to read ${options.input.fileName}: ${error}`),
       ]);
     }
   }

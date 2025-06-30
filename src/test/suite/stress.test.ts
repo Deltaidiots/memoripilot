@@ -229,7 +229,7 @@ suite('Memory Bank Stress & Edge Case Tests', () => {
   });
 
   test('Tool error handling - should handle tool invocation errors gracefully', async () => {
-    const tool = new UpdateContextTool();
+    const tool = new UpdateContextTool(memoryManager, modeManager);
     
     // Test with various malformed inputs
     const malformedInputs = [

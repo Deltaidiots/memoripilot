@@ -45,7 +45,6 @@ export class ModeManager {
     if (!mode) {
       return false;
     }
-    
     this._currentMode = mode;
     return true;
   }

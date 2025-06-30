@@ -12,6 +12,8 @@ import { ShowMemoryTool } from '../../tools/ShowMemoryTool';
 import { UpdateMemoryBankTool } from '../../tools/UpdateMemoryBankTool';
 import { SwitchModeTool } from '../../tools/SwitchModeTool';
 import { BaseMemoryBankTool } from '../../tools/BaseMemoryBankTool';
+import { MemoryManager } from '../../memory/MemoryManager';
+import { ModeManager } from '../../memory/modes/ModeManager';
 
 // Mock Language Model Tool interfaces for testing
 interface MockLanguageModelToolInvocationPrepareOptions<T> {
@@ -29,6 +31,8 @@ interface MockLanguageModelToolResult {
 
 suite('Language Model Tools Comprehensive Tests', () => {
   let tempWorkspace: vscode.WorkspaceFolder;
+  let memoryManager: MemoryManager;
+  let modeManager: ModeManager;
 
   // Mock cancellation token and invocation token
   const mockCancellationToken: vscode.CancellationToken = {
@@ -56,6 +60,10 @@ suite('Language Model Tools Comprehensive Tests', () => {
       writable: false,
       configurable: true
     });
+
+    memoryManager = MemoryManager.getInstance(tempWorkspace);
+    await memoryManager.initialise();
+    modeManager = ModeManager.getInstance(memoryManager);
   });
 
   suiteTeardown(async () => {
@@ -79,7 +87,7 @@ suite('Language Model Tools Comprehensive Tests', () => {
     ];
 
     for (const ToolClass of tools) {
-      const tool = new ToolClass();
+      const tool = new ToolClass(memoryManager, modeManager);
       
       // Check inheritance
       assert.ok(tool instanceof BaseMemoryBankTool, 
@@ -94,7 +102,7 @@ suite('Language Model Tools Comprehensive Tests', () => {
   });
 
   test('UpdateContextTool - comprehensive functionality test', async () => {
-    const tool = new UpdateContextTool();
+    const tool = new UpdateContextTool(memoryManager, modeManager);
     
     // Test input validation and preparation
     const testCases = [
@@ -138,7 +146,7 @@ suite('Language Model Tools Comprehensive Tests', () => {
   });
 
   test('LogDecisionTool - decision logging with rationale variations', async () => {
-    const tool = new LogDecisionTool();
+    const tool = new LogDecisionTool(memoryManager, modeManager);
     
     const testCases = [
       { 
@@ -182,7 +190,7 @@ suite('Language Model Tools Comprehensive Tests', () => {
   });
 
   test('UpdateProgressTool - complex progress tracking', async () => {
-    const tool = new UpdateProgressTool();
+    const tool = new UpdateProgressTool(memoryManager, modeManager);
     
     const testCases = [
       {
@@ -226,7 +234,7 @@ suite('Language Model Tools Comprehensive Tests', () => {
   });
 
   test('ShowMemoryTool - file display functionality', async () => {
-    const tool = new ShowMemoryTool();
+    const tool = new ShowMemoryTool(memoryManager, modeManager);
     
     const validFiles = [
       'activeContext.md',
@@ -258,26 +266,22 @@ suite('Language Model Tools Comprehensive Tests', () => {
   });
 
   test('SwitchModeTool - mode switching validation', async () => {
-    const tool = new SwitchModeTool();
+    const tool = new SwitchModeTool(memoryManager, modeManager);
     
     const validModes = ['architect', 'code', 'ask', 'debug'];
     const invalidModes = ['invalid', 'ARCHITECT', 'Code', '', 'unknown'];
 
     // Test valid modes
     for (const mode of validModes) {
-      const prepareOptions = { input: { mode } };
+      const prepareOptions = { input: { mode: mode as 'architect' | 'code' | 'ask' | 'debug' } };
       const preparation = await tool.prepare(prepareOptions, mockCancellationToken);
-      
       assert.ok(preparation.invocationMessage.includes(mode));
-      
       const invokeOptions = {
-        input: { mode },
+        input: { mode: mode as 'architect' | 'code' | 'ask' | 'debug' },
         toolInvocationToken: mockInvocationToken
       };
-      
       const result = await tool.invoke(invokeOptions, mockCancellationToken) as MockLanguageModelToolResult;
       assert.ok(result.content.length > 0);
-      
       const resultText = result.content[0].value || result.content[0].text || '';
       assert.ok(resultText.includes('✅') || resultText.toLowerCase().includes('switched'));
     }
@@ -285,20 +289,18 @@ suite('Language Model Tools Comprehensive Tests', () => {
     // Test invalid modes
     for (const mode of invalidModes) {
       const invokeOptions = {
-        input: { mode },
+        input: { mode } as any,
         toolInvocationToken: mockInvocationToken
       };
-      
       const result = await tool.invoke(invokeOptions, mockCancellationToken) as MockLanguageModelToolResult;
       assert.ok(result.content.length > 0);
-      
       const resultText = result.content[0].value || result.content[0].text || '';
       assert.ok(resultText.includes('❌') || resultText.toLowerCase().includes('invalid'));
     }
   });
 
   test('UpdateMemoryBankTool - comprehensive memory update', async () => {
-    const tool = new UpdateMemoryBankTool();
+    const tool = new UpdateMemoryBankTool(memoryManager, modeManager);
     
     const testContexts = [
       'Simple update context',
@@ -332,12 +334,12 @@ suite('Language Model Tools Comprehensive Tests', () => {
 
   test('Error handling across all tools', async () => {
     const tools = [
-      new UpdateContextTool(),
-      new LogDecisionTool(),
-      new UpdateProgressTool(),
-      new ShowMemoryTool(),
-      new UpdateMemoryBankTool(),
-      new SwitchModeTool()
+      new UpdateContextTool(memoryManager, modeManager),
+      new LogDecisionTool(memoryManager, modeManager),
+      new UpdateProgressTool(memoryManager, modeManager),
+      new ShowMemoryTool(memoryManager, modeManager),
+      new UpdateMemoryBankTool(memoryManager, modeManager),
+      new SwitchModeTool(memoryManager, modeManager)
     ];
 
     // Test with malformed input
@@ -363,12 +365,12 @@ suite('Language Model Tools Comprehensive Tests', () => {
 
   test('Cancellation token handling', async () => {
     const tools = [
-      new UpdateContextTool(),
-      new LogDecisionTool(),
-      new UpdateProgressTool(),
-      new ShowMemoryTool(),
-      new UpdateMemoryBankTool(),
-      new SwitchModeTool()
+      new UpdateContextTool(memoryManager, modeManager),
+      new LogDecisionTool(memoryManager, modeManager),
+      new UpdateProgressTool(memoryManager, modeManager),
+      new ShowMemoryTool(memoryManager, modeManager),
+      new UpdateMemoryBankTool(memoryManager, modeManager),
+      new SwitchModeTool(memoryManager, modeManager)
     ];
 
     const cancelledToken: vscode.CancellationToken = {
@@ -400,7 +402,7 @@ suite('Language Model Tools Comprehensive Tests', () => {
   test('Performance characteristics of tools', async function() {
     this.timeout(10000); // 10 second timeout for performance test
     
-    const tool = new UpdateContextTool();
+    const tool = new UpdateContextTool(memoryManager, modeManager);
     const iterations = 50;
     const startTime = Date.now();
     

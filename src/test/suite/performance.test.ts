@@ -60,9 +60,9 @@ suite('Memory Bank Performance Tests', () => {
   test('Tool execution performance - should complete operations under 1 second', async function() {
     this.timeout(5000);
     
-    const updateContextTool = new UpdateContextTool();
-    const logDecisionTool = new LogDecisionTool();
-    const updateProgressTool = new UpdateProgressTool();
+    const updateContextTool = new UpdateContextTool(memoryManager, modeManager);
+    const logDecisionTool = new LogDecisionTool(memoryManager, modeManager);
+    const updateProgressTool = new UpdateProgressTool(memoryManager, modeManager);
     
     // Mock cancellation token
     const cancellationToken = new vscode.CancellationTokenSource().token;
@@ -116,9 +116,9 @@ suite('Memory Bank Performance Tests', () => {
   test('Concurrent tool operations - should handle parallel execution', async function() {
     this.timeout(10000);
     
-    const updateContextTool = new UpdateContextTool();
-    const logDecisionTool = new LogDecisionTool();
-    const updateProgressTool = new UpdateProgressTool();
+    const updateContextTool = new UpdateContextTool(memoryManager, modeManager);
+    const logDecisionTool = new LogDecisionTool(memoryManager, modeManager);
+    const updateProgressTool = new UpdateProgressTool(memoryManager, modeManager);
     
     const cancellationToken = new vscode.CancellationTokenSource().token;
     
@@ -164,7 +164,7 @@ suite('Memory Bank Performance Tests', () => {
   test('Memory usage - should not leak memory during repeated operations', async function() {
     this.timeout(30000);
     
-    const updateContextTool = new UpdateContextTool();
+    const updateContextTool = new UpdateContextTool(memoryManager, modeManager);
     const cancellationToken = new vscode.CancellationTokenSource().token;
     
     // Get initial memory usage (Node.js only has limited memory stats)

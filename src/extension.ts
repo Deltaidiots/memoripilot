@@ -12,6 +12,7 @@ import {
 } from "./tools/index";
 import { MemoryParticipant } from "./chat/MemoryParticipant";
 import { MemoryTreeDataProvider } from "./ui/MemoryTreeDataProvider";
+import { ChatModeProvider } from "./chat/ChatModeProvider";
 
 // Global state
 let memoryManager: MemoryManager | undefined;
@@ -24,6 +25,9 @@ let modeStatusBarItem: vscode.StatusBarItem | undefined;
  * @param {vscode.ExtensionContext} ctx The extension context.
  */
 export function activate(ctx: vscode.ExtensionContext): void {
+  // Expose memoryManager and extensionContext for tools fallback
+  (globalThis as any).extensionContext = ctx;
+
   console.log("Memory Bank extension is being activated...");
   
   // Try to get the correct workspace using our utility
@@ -42,7 +46,7 @@ export function activate(ctx: vscode.ExtensionContext): void {
     const extensionWs = WorkspaceUtil.getExtensionWorkspace();
     if (extensionWs) {
       console.log(`Using extension workspace for initialization: ${extensionWs.uri.fsPath}`);
-      void initializeMemoryBank(extensionWs);
+      void initializeMemoryBank(extensionWs, ctx);
       const memoryTreeDataProvider = new MemoryTreeDataProvider(extensionWs.uri.fsPath);
       vscode.window.registerTreeDataProvider('memory-bank-view', memoryTreeDataProvider);
     } else {
@@ -50,7 +54,7 @@ export function activate(ctx: vscode.ExtensionContext): void {
       const ws = vscode.workspace.workspaceFolders?.[0];
       if (ws) {
         console.log(`No extension workspace found, using first workspace: ${ws.uri.fsPath}`);
-        void initializeMemoryBank(ws);
+        void initializeMemoryBank(ws, ctx);
         const memoryTreeDataProvider = new MemoryTreeDataProvider(ws.uri.fsPath);
         vscode.window.registerTreeDataProvider('memory-bank-view', memoryTreeDataProvider);
       } else {
@@ -88,9 +92,6 @@ export function activate(ctx: vscode.ExtensionContext): void {
     }
   }
   
-  // Register Language Model Tools for GitHub Copilot integration (primary mode)
-  registerLanguageModelTools(ctx);
-  
   // Register Chat Participant as fallback
   registerChatParticipant(ctx);
   
@@ -99,6 +100,18 @@ export function activate(ctx: vscode.ExtensionContext): void {
   
   // Setup status bar
   setupStatusBar(ctx);
+  
+  // After memoryManager is initialized (in initializeMemoryBank or fallback), also initialize ChatModeProvider
+  // (Assume memoryManager is set in initializeMemoryBank)
+  setTimeout(() => {
+    if (memoryManager) {
+      const chatModeProvider = ChatModeProvider.getInstance();
+      chatModeProvider.initialize(memoryManager, ctx).catch(err => {
+        console.error('Failed to initialize ChatModeProvider:', err);
+      });
+      (globalThis as any).chatModeProvider = chatModeProvider;
+    }
+  }, 1000);
 }
 
 /**
@@ -108,16 +121,22 @@ function registerLanguageModelTools(ctx: vscode.ExtensionContext): void {
   try {
     if (vscode.lm && vscode.lm.registerTool) {
       console.log("Registering Language Model Tools...");
-      
+
+      // Use the already-initialized managers
+      if (!memoryManager || !modeManager) {
+        throw new Error("MemoryManager or ModeManager not initialized before tool registration");
+      }
+
       ctx.subscriptions.push(
-        vscode.lm.registerTool('memory_bank_update_context', new UpdateContextTool()),
-        vscode.lm.registerTool('memory_bank_log_decision', new LogDecisionTool()),
-        vscode.lm.registerTool('memory_bank_update_progress', new UpdateProgressTool()),
-        vscode.lm.registerTool('memory_bank_show_memory', new ShowMemoryTool()),
-        vscode.lm.registerTool('memory_bank_update_all', new UpdateMemoryBankTool()),
-        vscode.lm.registerTool('memory_bank_switch_mode', new SwitchModeTool())
+        vscode.lm.registerTool('memory_bank_update_context', new UpdateContextTool(memoryManager, modeManager)),
+        vscode.lm.registerTool('memory_bank_log_decision', new LogDecisionTool(memoryManager, modeManager)),
+        vscode.lm.registerTool('memory_bank_update_progress', new UpdateProgressTool(memoryManager, modeManager)),
+        vscode.lm.registerTool('memory_bank_show_memory', new ShowMemoryTool(memoryManager, modeManager)),
+        vscode.lm.registerTool('memory_bank_update_all', new UpdateMemoryBankTool(memoryManager, modeManager)),
+        vscode.lm.registerTool('memory_bank_switch_mode', new SwitchModeTool(memoryManager, modeManager)),
+        vscode.lm.registerTool('switchMode', new SwitchModeTool(memoryManager, modeManager))
       );
-      
+
       console.log("Language Model Tools registered successfully!");
       void vscode.window.showInformationMessage("Memory Bank tools registered for GitHub Copilot!");
     } else {
@@ -244,21 +263,26 @@ function updateStatusBar(modeName: string): void {
  * Initialize the Memory Bank services when a workspace is available.
  * @param ws The workspace folder
  */
-async function initializeMemoryBank(ws: vscode.WorkspaceFolder): Promise<void> {
+async function initializeMemoryBank(ws: vscode.WorkspaceFolder, ctx?: vscode.ExtensionContext): Promise<void> {
   try {
     // Initialize memory manager
     memoryManager = MemoryManager.getInstance(ws);
     await memoryManager.initialise();
-    
-    // Initialize mode manager
+    (globalThis as any).memoryManager = memoryManager;
     modeManager = ModeManager.getInstance(memoryManager);
-    
-    // Initialize Copilot integration
     if (memoryManager && modeManager) {
       copilotIntegration = CopilotIntegration.getInstance(memoryManager, modeManager);
       await copilotIntegration.activate(ws);
     }
-    
+    const chatModeProvider = ChatModeProvider.getInstance();
+    chatModeProvider.registerMode('memoripilot.ask');
+    chatModeProvider.registerMode('memoripilot.architect');
+    chatModeProvider.registerMode('memoripilot.code');
+    chatModeProvider.registerMode('memoripilot.debug');
+    // Register tools only after managers are ready
+    if (ctx) {
+      registerLanguageModelTools(ctx);
+    }
     console.log("Memory Bank services initialized");
     void vscode.window.showInformationMessage("Memory Bank initialized successfully!");
   } catch (error) {
@@ -271,15 +295,27 @@ async function initializeMemoryBank(ws: vscode.WorkspaceFolder): Promise<void> {
  * This method is called when your extension is deactivated.
  */
 export function deactivate(): void {
+  // Log deactivation with stack trace and state
+  console.log('[Memory Bank] Deactivation called. Stack:', new Error().stack);
+  console.log('[Memory Bank] State at deactivation:', {
+    memoryManager,
+    modeManager,
+    copilotIntegration,
+    chatModeProvider: (ChatModeProvider as any).instance
+  });
   // Clean up file watchers
   if (memoryManager) {
     memoryManager.stopWatching();
   }
-  
   // Deactivate Copilot integration
   if (copilotIntegration) {
     copilotIntegration.deactivate();
   }
-  
-  console.log("Memory Bank extension deactivated");
+  // Dispose ChatModeProvider singleton
+  const chatModeProvider = (ChatModeProvider as any).instance as ChatModeProvider | undefined;
+  if (chatModeProvider && typeof chatModeProvider.dispose === 'function') {
+    chatModeProvider.dispose();
+  }
+  (ChatModeProvider as any).instance = undefined;
+  console.log('Memory Bank extension deactivated');
 }

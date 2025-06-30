@@ -58,7 +58,7 @@ suite('Memory Bank Security & Edge Case Tests', () => {
   });
 
   test('Input validation - should handle malicious input safely', async () => {
-    const updateContextTool = new UpdateContextTool();
+    const updateContextTool = new UpdateContextTool(memoryManager, modeManager);
     
     // Test with various potentially malicious inputs
     const maliciousInputs = [
@@ -97,7 +97,7 @@ suite('Memory Bank Security & Edge Case Tests', () => {
   });
 
   test('File path security - should prevent directory traversal attacks', async () => {
-    const showMemoryTool = new ShowMemoryTool();
+    const showMemoryTool = new ShowMemoryTool(memoryManager, modeManager);
     
     // Test with path traversal attempts
     const pathTraversalAttempts = [
@@ -135,7 +135,7 @@ suite('Memory Bank Security & Edge Case Tests', () => {
   });
 
   test('Large input handling - should handle extremely large inputs gracefully', async () => {
-    const logDecisionTool = new LogDecisionTool();
+    const logDecisionTool = new LogDecisionTool(memoryManager, modeManager);
     
     // Test with extremely large decision text (10MB)
     const largeDecision = 'A'.repeat(10 * 1024 * 1024);
@@ -168,7 +168,7 @@ suite('Memory Bank Security & Edge Case Tests', () => {
   });
 
   test('Special character handling - should handle unicode and special characters', async () => {
-    const updateContextTool = new UpdateContextTool();
+    const updateContextTool = new UpdateContextTool(memoryManager, modeManager);
     
     // Test with various special characters and unicode
     const specialInputs = [
@@ -206,8 +206,8 @@ suite('Memory Bank Security & Edge Case Tests', () => {
   });
 
   test('Concurrent access - should handle file system race conditions', async () => {
-    const updateContextTool = new UpdateContextTool();
-    const logDecisionTool = new LogDecisionTool();
+    const updateContextTool = new UpdateContextTool(memoryManager, modeManager);
+    const logDecisionTool = new LogDecisionTool(memoryManager, modeManager);
     
     // Create many concurrent operations on the same files
     const operations = [];
@@ -253,7 +253,7 @@ suite('Memory Bank Security & Edge Case Tests', () => {
   });
 
   test('Memory pressure - should handle low memory conditions gracefully', async () => {
-    const updateContextTool = new UpdateContextTool();
+    const updateContextTool = new UpdateContextTool(memoryManager, modeManager);
     
     // Simulate memory pressure by creating large objects
     const largeObjects: any[] = [];
@@ -285,7 +285,7 @@ suite('Memory Bank Security & Edge Case Tests', () => {
   });
 
   test('Error recovery - should recover from file system errors', async () => {
-    const updateContextTool = new UpdateContextTool();
+    const updateContextTool = new UpdateContextTool(memoryManager, modeManager);
     
     // Create a scenario where the memory bank directory might be temporarily unavailable
     const memoryBankPath = path.join(tempWorkspace.uri.fsPath, 'memory-bank');
@@ -329,7 +329,7 @@ suite('Memory Bank Security & Edge Case Tests', () => {
   });
 
   test('Cancellation token handling - should respect cancellation requests', async () => {
-    const updateContextTool = new UpdateContextTool();
+    const updateContextTool = new UpdateContextTool(memoryManager, modeManager);
     const cancellationSource = new vscode.CancellationTokenSource();
     
     // Cancel the operation immediately

@@ -70,3 +70,6 @@ export const MODES: Record<string, Mode> = {
     triggers: ["debug", "fix", "issue", "bug", "problem", "error", "fail"]
   }
 };
+
+export type AllowedMode = keyof typeof MODES;
+export const MODE_PREFIX = "memoripilot.";

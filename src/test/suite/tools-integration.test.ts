@@ -9,6 +9,8 @@ import { UpdateProgressTool } from '../../tools/UpdateProgressTool';
 import { ShowMemoryTool } from '../../tools/ShowMemoryTool';
 import { UpdateMemoryBankTool } from '../../tools/UpdateMemoryBankTool';
 import { SwitchModeTool } from '../../tools/SwitchModeTool';
+import { MemoryManager } from '../../memory/MemoryManager';
+import { ModeManager } from '../../memory/modes/ModeManager';
 
 // Mock CancellationToken
 const mockToken: vscode.CancellationToken = {
@@ -23,6 +25,8 @@ const mockInvocationToken = {
 
 suite('Memory Bank Tools Integration Tests', () => {
   let tempWorkspace: vscode.WorkspaceFolder;
+  let memoryManager: MemoryManager;
+  let modeManager: ModeManager;
 
   suiteSetup(async () => {
     // Create a temporary workspace for testing
@@ -40,6 +44,10 @@ suite('Memory Bank Tools Integration Tests', () => {
       writable: false,
       configurable: true
     });
+
+    memoryManager = MemoryManager.getInstance(tempWorkspace);
+    await memoryManager.initialise();
+    modeManager = ModeManager.getInstance(memoryManager);
   });
 
   suiteTeardown(async () => {
@@ -54,7 +62,7 @@ suite('Memory Bank Tools Integration Tests', () => {
   });
 
   test('UpdateContextTool - should handle tool invocation lifecycle', async () => {
-    const tool = new UpdateContextTool();
+    const tool = new UpdateContextTool(memoryManager, modeManager);
     const testContext = 'Working on authentication system for e-commerce platform';
     
     // Test prepare first
@@ -88,7 +96,7 @@ suite('Memory Bank Tools Integration Tests', () => {
   });
 
   test('LogDecisionTool - should validate input and handle errors gracefully', async () => {
-    const tool = new LogDecisionTool();
+    const tool = new LogDecisionTool(memoryManager, modeManager);
     
     // Test with valid input
     const validInput = {
@@ -125,7 +133,7 @@ suite('Memory Bank Tools Integration Tests', () => {
   });
 
   test('UpdateProgressTool - should handle complex progress structures', async () => {
-    const tool = new UpdateProgressTool();
+    const tool = new UpdateProgressTool(memoryManager, modeManager);
     
     const complexProgress = {
       done: [
@@ -171,7 +179,7 @@ suite('Memory Bank Tools Integration Tests', () => {
   });
 
   test('ShowMemoryTool - should handle different file types', async () => {
-    const tool = new ShowMemoryTool();
+    const tool = new ShowMemoryTool(memoryManager, modeManager);
     
     // Test with different valid file names
     const testFiles = [
@@ -212,13 +220,13 @@ suite('Memory Bank Tools Integration Tests', () => {
   });
 
   test('SwitchModeTool - should validate modes and provide clear feedback', async () => {
-    const tool = new SwitchModeTool();
+    const tool = new SwitchModeTool(memoryManager, modeManager);
     
     const validModes = ['architect', 'code', 'ask', 'debug'];
     
     // Test each valid mode
     for (const mode of validModes) {
-      const prepareOptions = { input: { mode } };
+      const prepareOptions = { input: { mode: mode as 'architect' | 'code' | 'ask' | 'debug' } };
       const preparation = await tool.prepare(prepareOptions, mockToken);
       
       assert.ok(preparation.invocationMessage.includes(mode), 
@@ -226,7 +234,7 @@ suite('Memory Bank Tools Integration Tests', () => {
       assert.ok(preparation.confirmationMessages);
       
       const invokeOptions = {
-        input: { mode },
+        input: { mode: mode as 'architect' | 'code' | 'ask' | 'debug' },
         toolInvocationToken: mockInvocationToken
       };
 
@@ -237,7 +245,7 @@ suite('Memory Bank Tools Integration Tests', () => {
     
     // Test invalid mode
     const invalidModeOptions = {
-      input: { mode: 'invalid-mode' },
+      input: { mode: 'invalid-mode' } as any,
       toolInvocationToken: mockInvocationToken
     };
 
@@ -250,7 +258,7 @@ suite('Memory Bank Tools Integration Tests', () => {
   });
 
   test('UpdateMemoryBankTool - should handle comprehensive memory updates', async () => {
-    const tool = new UpdateMemoryBankTool();
+    const tool = new UpdateMemoryBankTool(memoryManager, modeManager);
     
     const comprehensiveContext = `
     Working on a modern e-commerce platform with the following characteristics:
@@ -293,7 +301,7 @@ suite('Memory Bank Tools Integration Tests', () => {
     });
 
     try {
-      const tool = new UpdateContextTool();
+      const tool = new UpdateContextTool(memoryManager, modeManager);
       const options = {
         input: { context: 'Test context' },
         toolInvocationToken: mockInvocationToken
@@ -320,7 +328,7 @@ suite('Memory Bank Tools Integration Tests', () => {
       onCancellationRequested: (() => ({ dispose: () => {} })) as any
     };
 
-    const tool = new UpdateContextTool();
+    const tool = new UpdateContextTool(memoryManager, modeManager);
     const options = {
       input: { context: 'Test context' },
       toolInvocationToken: mockInvocationToken
@@ -334,12 +342,12 @@ suite('Memory Bank Tools Integration Tests', () => {
 
   test('All tools should implement the base interface correctly', () => {
     const tools = [
-      new UpdateContextTool(),
-      new LogDecisionTool(),
-      new UpdateProgressTool(),
-      new ShowMemoryTool(),
-      new UpdateMemoryBankTool(),
-      new SwitchModeTool()
+      new UpdateContextTool(memoryManager, modeManager),
+      new LogDecisionTool(memoryManager, modeManager),
+      new UpdateProgressTool(memoryManager, modeManager),
+      new ShowMemoryTool(memoryManager, modeManager),
+      new UpdateMemoryBankTool(memoryManager, modeManager),
+      new SwitchModeTool(memoryManager, modeManager)
     ];
 
     for (const tool of tools) {

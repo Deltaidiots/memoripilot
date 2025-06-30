@@ -30,11 +30,13 @@
 
 ## ✨ Features
 
+- **Dependency Injection for Core Services**: All core services (MemoryManager, ModeManager) use dependency injection for robust initialization and testability.
 - **Native GitHub Copilot Integration**: Tools appear directly in Copilot's agent mode
 - **Automatic Tool Discovery**: Copilot automatically suggests relevant memory operations  
 - **User Safety**: Built-in confirmation dialogs for all operations
 - **Persistent Memory**: Maintains project context across editor restarts and chat sessions
-- **Core Memory Files**: Auto-scaffolds a memory-bank directory with specialized files for different types of information
+- **Core Memory Files**: Auto-scaffolds a memory-bank directory with specialized files for different types of information, using templates that match root implementations
+- **Section-Specific Updates**: Tools update only relevant sections of memory files, preserving the rest of the content
 - **Knowledge Management**: Organizes project information into dedicated files with clear purposes
 - **Four Working Modes**: Architect, Code, Ask, and Debug - each with specialized behaviors
 - **Real-time Updates**: Monitors file changes and maintains cross-file consistency
@@ -183,6 +185,20 @@ You can switch modes by:
 ## Architecture
 
 The extension uses VS Code's Language Model Tools API to provide native GitHub Copilot integration, with fallback support for VS Code Chat participants when the tools API isn't available.
+
+### Dependency Injection & Initialization
+
+- All core services (MemoryManager, ModeManager) are instantiated once and injected into all tools, replacing unstable singletons.
+- Tools are registered only after managers are initialized, ensuring robust startup and tool registration.
+
+### File Template System
+
+- All memory-bank files are initialized from templates in `FileTemplates.ts`, including a correct template for `architect.md` matching the root implementation.
+- Templates are used for initialization; real project data will diverge as you use the extension.
+
+### Section-Specific File Updates
+
+- Tools like UpdateContextTool update only the relevant section (e.g., "Current Goals" in `activeContext.md`), preserving the rest of the file.
 
 ## Development and Testing
 

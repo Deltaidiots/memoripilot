@@ -54,12 +54,12 @@ suite('Mode Manager Test Suite', () => {
 
     test('Switch Mode Tool', async () => {
         // Create a SwitchModeTool instance
-        const switchModeTool = new SwitchModeTool();
+        const switchModeTool = new SwitchModeTool(memoryManager, modeManager);
 
         // Create a properly typed mock with unknown casting
         const mockOptions = {
-            input: { mode: 'debug' }
-        } as unknown as vscode.LanguageModelToolInvocationOptions<{ mode: string }>;
+            input: { mode: 'debug' as 'debug' }
+        } as vscode.LanguageModelToolInvocationOptions<{ mode: 'debug' }>;
 
         // Invoke the tool
         const result = await switchModeTool.invoke(mockOptions, new vscode.CancellationTokenSource().token);

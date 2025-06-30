@@ -1,6 +1,8 @@
 import * as vscode from "vscode";
 import { BaseMemoryBankTool } from "./BaseMemoryBankTool";
 import { WorkspaceAnalyzer } from "../analysis/WorkspaceAnalyzer"; // Import the analyzer
+import { MemoryManager } from "../memory/MemoryManager";
+import { ModeManager } from "../memory/modes/ModeManager";
 
 interface UpdateMemoryBankParams {
   // No parameters needed for this tool
@@ -10,6 +12,10 @@ interface UpdateMemoryBankParams {
  * Tool for updating the entire memory bank based on workspace state
  */
 export class UpdateMemoryBankTool extends BaseMemoryBankTool<UpdateMemoryBankParams> {
+  constructor(memoryManager: MemoryManager, modeManager: ModeManager) {
+    super(memoryManager, modeManager);
+  }
+
   async prepare(
     options: vscode.LanguageModelToolInvocationPrepareOptions<UpdateMemoryBankParams>,
     token: vscode.CancellationToken
