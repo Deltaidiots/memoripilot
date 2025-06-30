@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![MemoriPilot Logo](https://raw.githubusercontent.com/Deltaidiots/memoripilot/main/resources/memory-bank-icon.png)
+![MemoriPilot Logo](./resources/memory-bank-icon.png)
 
 [![VS Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/gujjar19.memoripilot?style=flat-square&label=VS%20Marketplace&logo=visual-studio-code)](https://marketplace.visualstudio.com/items?itemName=gujjar19.memoripilot)
 [![Installs](https://img.shields.io/visual-studio-marketplace/i/gujjar19.memoripilot?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=gujjar19.memoripilot)
