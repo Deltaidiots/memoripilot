@@ -2,7 +2,7 @@
   "name": "memoripilot",
   "displayName": "MemoriPilot",
   "description": "Project memory for Copilot - Supercharge Copilot with persistent context awareness that remembers decisions, tracks progress, and provides consistent project knowledge",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "gujjar19",
   "author": {
     "name": "Asad Hayat"
