@@ -1,39 +1,21 @@
 import * as vscode from "vscode";
-import { MemoryManager, SummarisedMemory } from "../memory/MemoryManager";
+import { MemoryManager } from "../memory/MemoryManager";
 import { ModeManager } from "../memory/modes/ModeManager";
 
 /**
- * Handles integration with GitHub Copilot by providing context in ways
- * that Copilot can access, even without direct API access.
+ * Handles integration with GitHub Copilot.
+ * NOTE: This class previously managed the context.md file, which has been removed.
  */
 export class CopilotIntegration {
   private static _instance: CopilotIntegration | null = null;
   private _memoryManager: MemoryManager;
   private _modeManager: ModeManager;
   private _isActive = false;
+  private _disposables: vscode.Disposable[] = [];
 
   private constructor(memoryManager: MemoryManager, modeManager: ModeManager) {
     this._memoryManager = memoryManager;
     this._modeManager = modeManager;
-    
-    // Listen for editor changes to inject context when appropriate
-    const subscriptions: vscode.Disposable[] = [];
-    
-    // When editor becomes active, check if we should inject context
-    subscriptions.push(
-      vscode.window.onDidChangeActiveTextEditor(() => {
-        if (this._isActive) {
-          this.updateCopilotContext();
-        }
-      })
-    );
-    
-    // Memory content changes should update context
-    this._memoryManager.on("contentChanged", () => {
-      if (this._isActive) {
-        this.updateCopilotContext();
-      }
-    });
   }
   
   /**
@@ -64,25 +46,33 @@ export class CopilotIntegration {
   }
   
   /**
-   * Deactivate the Copilot integration
+   * Deactivate Copilot integration and dispose all resources
    */
   public deactivate(): void {
+    console.log('CopilotIntegration: Deactivating...');
     this._isActive = false;
+    
+    // Dispose all disposables
+    for (const disposable of this._disposables) {
+      try {
+        disposable.dispose();
+      } catch (err) {
+        console.error('Error disposing CopilotIntegration resource:', err);
+      }
+    }
+    this._disposables = [];
+    
+    // Reset the singleton instance
+    CopilotIntegration._instance = null;
+    console.log('CopilotIntegration: Successfully deactivated');
   }
   
   /**
-   * Update the context for Copilot integration
+   * This method previously updated the context.md file.
+   * It's now a no-op but maintained for compatibility with existing tools.
    */
   public async updateCopilotContext(): Promise<void> {
-    // No-op: context file is not used anymore
+    // This functionality has been removed
     return;
-  }
-  
-  /**
-   * Create a system prompt that includes memory bank context
-   * (No longer needed, left as a stub for compatibility)
-   */
-  public async createCopilotSystemPrompt(): Promise<string> {
-    return '';
   }
 }

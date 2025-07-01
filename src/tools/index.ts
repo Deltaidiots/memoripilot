@@ -5,3 +5,7 @@ export { UpdateProgressTool } from "./UpdateProgressTool";
 export { ShowMemoryTool } from "./ShowMemoryTool";
 export { UpdateMemoryBankTool } from "./UpdateMemoryBankTool";
 export { SwitchModeTool } from "./SwitchModeTool";
+export { UpdateProductContextTool } from "./UpdateProductContextTool";
+export { UpdateSystemPatternsTool } from "./UpdateSystemPatternsTool";
+export { UpdateProjectBriefTool } from "./UpdateProjectBriefTool";
+export { UpdateArchitectTool } from "./UpdateArchitectTool";
