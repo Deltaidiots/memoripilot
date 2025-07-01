@@ -1,4 +1,6 @@
 import * as vscode from "vscode";
+import * as fs from "fs";
+import * as path from "path";
 import { MemoryManager } from "./memory/MemoryManager";
 import { ModeManager } from "./memory/modes/ModeManager";
 import { CopilotIntegration } from "./copilot/CopilotIntegration";
@@ -8,11 +10,61 @@ import {
   UpdateProgressTool,
   ShowMemoryTool,
   UpdateMemoryBankTool,
-  SwitchModeTool
+  SwitchModeTool,
+  UpdateProductContextTool,
+  UpdateSystemPatternsTool,
+  UpdateProjectBriefTool,
+  UpdateArchitectTool
 } from "./tools/index";
 import { MemoryParticipant } from "./chat/MemoryParticipant";
 import { MemoryTreeDataProvider } from "./ui/MemoryTreeDataProvider";
 import { ChatModeProvider } from "./chat/ChatModeProvider";
+
+// Helper class for cleanup management
+class DisposableStore {
+  private _disposables: vscode.Disposable[] = [];
+  private _isDisposed = false;
+
+  public add(disposable: vscode.Disposable): void {
+    if (this._isDisposed) {
+      console.warn('Adding to disposed DisposableStore. The object will be leaked.');
+      return;
+    }
+    this._disposables.push(disposable);
+  }
+
+  public dispose(): void {
+    if (this._isDisposed) {
+      return;
+    }
+    
+    this._isDisposed = true;
+    const errors: Error[] = [];
+    
+    // Dispose in reverse order
+    while (this._disposables.length) {
+      try {
+        const disposable = this._disposables.pop();
+        if (disposable) {
+          disposable.dispose();
+        }
+      } catch (e) {
+        errors.push(e instanceof Error ? e : new Error(String(e)));
+      }
+    }
+    
+    if (errors.length) {
+      console.error(`Errors during DisposableStore disposal: ${errors.map(e => e.message).join(', ')}`);
+    }
+  }
+
+  public get isDisposed(): boolean {
+    return this._isDisposed;
+  }
+}
+
+// Global disposal store to ensure proper cleanup
+const disposables = new DisposableStore();
 
 // Global state
 let memoryManager: MemoryManager | undefined;
@@ -96,19 +148,87 @@ export function activate(ctx: vscode.ExtensionContext): void {
   registerChatParticipant(ctx);
   
   // Register essential commands
-  registerCommands(ctx);
+  registerCommands(ctx, disposables);
   
   // Setup status bar
-  setupStatusBar(ctx);
+  setupStatusBar(ctx, disposables);
   
   // After memoryManager is initialized (in initializeMemoryBank or fallback), also initialize ChatModeProvider
   // (Assume memoryManager is set in initializeMemoryBank)
   setTimeout(() => {
     if (memoryManager) {
       const chatModeProvider = ChatModeProvider.getInstance();
-      chatModeProvider.initialize(memoryManager, ctx).catch(err => {
-        console.error('Failed to initialize ChatModeProvider:', err);
-      });
+      chatModeProvider.initialize(memoryManager, ctx)
+        .then(async () => {
+          // Check if any templates have updates available
+          try {
+            const updatesAvailable = await chatModeProvider.checkForTemplateUpdates();
+            if (updatesAvailable) {
+              const updateNow = 'Update Now';
+              const remindLater = 'Remind Later';
+              const choice = await vscode.window.showInformationMessage(
+                'New chat mode templates are available. Would you like to update them?',
+                updateNow,
+                remindLater
+              );
+              
+              if (choice === updateNow) {
+                const results = await vscode.window.withProgress({
+                  location: vscode.ProgressLocation.Notification,
+                  title: "Updating chat mode templates...",
+                  cancellable: false
+                }, async () => {
+                  return await chatModeProvider.refreshTemplates(false);
+                });
+                
+                // Show detailed update information
+                if (results.updated.length > 0) {
+                  const viewDetails = 'View Details';
+                  const response = await vscode.window.showInformationMessage(
+                    `${results.updated.length} chat mode template(s) updated successfully!`,
+                    viewDetails
+                  );
+                  
+                  if (response === viewDetails) {
+                    // Create a temporary markdown file with update details
+                    const workspaceFolders = vscode.workspace.workspaceFolders;
+                    if (workspaceFolders) {
+                      const tempDir = path.join(workspaceFolders[0].uri.fsPath, '.vscode');
+                      if (!fs.existsSync(tempDir)) {
+                        fs.mkdirSync(tempDir, { recursive: true });
+                      }
+                      
+                      const detailsPath = path.join(tempDir, 'template-update-details.md');
+                      const detailsContent = `# Chat Mode Template Updates
+
+## Updated Templates
+${results.updated.map(file => `- ✅ ${file}`).join('\n')}
+
+${results.backups.length > 0 ? `## Backups Created
+${results.backups.map(file => `- 💾 ${file}`).join('\n')}` : ''}
+
+${results.skipped.length > 0 ? `## Skipped Templates (Already Up-to-Date)
+${results.skipped.map(file => `- ⏭️ ${file}`).join('\n')}` : ''}
+
+Template files are located in the \`.github/chatmodes/\` directory.
+`;
+                      fs.writeFileSync(detailsPath, detailsContent);
+                      const doc = await vscode.workspace.openTextDocument(detailsPath);
+                      await vscode.window.showTextDocument(doc);
+                    }
+                  }
+                } else {
+                  void vscode.window.showInformationMessage("All chat mode templates are already up-to-date!");
+                }
+              }
+            }
+          } catch (err) {
+            console.error('Failed to check for template updates:', err);
+          }
+        })
+        .catch(err => {
+          console.error('Failed to initialize ChatModeProvider:', err);
+        });
       (globalThis as any).chatModeProvider = chatModeProvider;
     }
   }, 1000);
@@ -132,9 +252,16 @@ function registerLanguageModelTools(ctx: vscode.ExtensionContext): void {
         vscode.lm.registerTool('memory_bank_log_decision', new LogDecisionTool(memoryManager, modeManager)),
         vscode.lm.registerTool('memory_bank_update_progress', new UpdateProgressTool(memoryManager, modeManager)),
         vscode.lm.registerTool('memory_bank_show_memory', new ShowMemoryTool(memoryManager, modeManager)),
-        vscode.lm.registerTool('memory_bank_update_all', new UpdateMemoryBankTool(memoryManager, modeManager)),
+        // Tool disabled as it's not ready yet
+        // vscode.lm.registerTool('memory_bank_update_all', new UpdateMemoryBankTool(memoryManager, modeManager)),
         vscode.lm.registerTool('memory_bank_switch_mode', new SwitchModeTool(memoryManager, modeManager)),
-        vscode.lm.registerTool('switchMode', new SwitchModeTool(memoryManager, modeManager))
+        vscode.lm.registerTool('switchMode', new SwitchModeTool(memoryManager, modeManager)),
+        
+        // Specialized memory file update tools
+        vscode.lm.registerTool('memory_bank_update_product_context', new UpdateProductContextTool(memoryManager, modeManager)),
+        vscode.lm.registerTool('memory_bank_update_system_patterns', new UpdateSystemPatternsTool(memoryManager, modeManager)),
+        vscode.lm.registerTool('memory_bank_update_project_brief', new UpdateProjectBriefTool(memoryManager, modeManager)),
+        vscode.lm.registerTool('memory_bank_update_architect', new UpdateArchitectTool(memoryManager, modeManager))
       );
 
       console.log("Language Model Tools registered successfully!");
@@ -180,34 +307,34 @@ function registerChatParticipant(ctx: vscode.ExtensionContext): void {
 /**
  * Register essential commands
  */
-function registerCommands(ctx: vscode.ExtensionContext): void {
+function registerCommands(ctx: vscode.ExtensionContext, store: DisposableStore): void {
   // Test command
-  ctx.subscriptions.push(
-    vscode.commands.registerCommand("memoryBank.test", () => {
-      void vscode.window.showInformationMessage("Memory Bank extension is active!");
-    })
-  );
+  const testCommand = vscode.commands.registerCommand("memoryBank.test", () => {
+    void vscode.window.showInformationMessage("Memory Bank extension is active!");
+  });
+  store.add(testCommand);
+  ctx.subscriptions.push(testCommand);
 
   // Mode selection command
-  ctx.subscriptions.push(
-    vscode.commands.registerCommand("memoryBank.selectMode", async () => {
-      if (!modeManager) {
-        void vscode.window.showErrorMessage("Memory Bank not initialized. Please open a workspace.");
-        return;
-      }
-      
-      const modes = ["Architect", "Code", "Ask", "Debug"];
-      const selected = await vscode.window.showQuickPick(modes, {
-        placeHolder: "Select Memory Bank mode"
-      });
-      
-      if (selected) {
-        const modeId = selected.toLowerCase();
-        modeManager.setMode(modeId);
-        updateStatusBar(selected);
-      }
-    })
-  );
+  const selectModeCommand = vscode.commands.registerCommand("memoryBank.selectMode", async () => {
+    if (!modeManager) {
+      void vscode.window.showErrorMessage("Memory Bank not initialized. Please open a workspace.");
+      return;
+    }
+    
+    const modes = ["Architect", "Code", "Ask", "Debug"];
+    const selected = await vscode.window.showQuickPick(modes, {
+      placeHolder: "Select Memory Bank mode"
+    });
+    
+    if (selected) {
+      const modeId = selected.toLowerCase();
+      modeManager.setMode(modeId);
+      updateStatusBar(selected);
+    }
+  });
+  store.add(selectModeCommand);
+  ctx.subscriptions.push(selectModeCommand);
 
   // Manual command processor (keyboard shortcut)
   ctx.subscriptions.push(
@@ -232,12 +359,88 @@ function registerCommands(ctx: vscode.ExtensionContext): void {
       }
     })
   );
+
+  // Template refresh command
+  ctx.subscriptions.push(
+    vscode.commands.registerCommand("memoryBank.refreshTemplates", async () => {
+      try {
+        const chatProvider = ChatModeProvider.getInstance();
+        
+        const options = [
+          { label: "Yes, update all templates", detail: "Overwrite existing templates with the latest versions from the extension" },
+          { label: "No, only update if newer", detail: "Update templates only if they have a newer version" },
+          { label: "Cancel", detail: "Don't update any templates" }
+        ];
+        
+        const selection = await vscode.window.showQuickPick(options, {
+          placeHolder: "How would you like to update chat mode templates?",
+          ignoreFocusOut: true
+        });
+        
+        if (!selection || selection.label === "Cancel") {
+          return;
+        }
+        
+        const forceUpdate = selection.label === "Yes, update all templates";
+        
+        const results = await vscode.window.withProgress({
+          location: vscode.ProgressLocation.Notification,
+          title: "Refreshing chat mode templates...",
+          cancellable: false
+        }, async () => {
+          return await chatProvider.refreshTemplates(forceUpdate);
+        });
+        
+        // Show detailed update information
+        if (results.updated.length > 0) {
+          const viewDetails = 'View Details';
+          const response = await vscode.window.showInformationMessage(
+            `${results.updated.length} chat mode template(s) updated successfully!`,
+            viewDetails
+          );
+          
+          if (response === viewDetails) {
+            // Create a temporary markdown file with update details
+            const workspaceFolders = vscode.workspace.workspaceFolders;
+            if (workspaceFolders) {
+              const tempDir = path.join(workspaceFolders[0].uri.fsPath, '.vscode');
+              if (!fs.existsSync(tempDir)) {
+                fs.mkdirSync(tempDir, { recursive: true });
+              }
+              
+              const detailsPath = path.join(tempDir, 'template-update-details.md');
+              const detailsContent = `# Chat Mode Template Updates
+
+## Updated Templates
+${results.updated.map(file => `- ✅ ${file}`).join('\n')}
+
+${results.backups.length > 0 ? `## Backups Created
+${results.backups.map(file => `- 💾 ${file}`).join('\n')}` : ''}
+
+${results.skipped.length > 0 ? `## Skipped Templates (Already Up-to-Date)
+${results.skipped.map(file => `- ⏭️ ${file}`).join('\n')}` : ''}
+
+Template files are located in the \`.github/chatmodes/\` directory.
+`;
+              fs.writeFileSync(detailsPath, detailsContent);
+              const doc = await vscode.workspace.openTextDocument(detailsPath);
+              await vscode.window.showTextDocument(doc);
+            }
+          }
+        } else {
+          void vscode.window.showInformationMessage("All chat mode templates are already up-to-date!");
+        }
+      } catch (error) {
+        void vscode.window.showErrorMessage(`Failed to refresh templates: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    })
+  );
 }
 
 /**
  * Setup status bar items
  */
-function setupStatusBar(ctx: vscode.ExtensionContext): void {
+function setupStatusBar(ctx: vscode.ExtensionContext, store: DisposableStore): void {
   // Create mode status bar item
   modeStatusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Left,
@@ -247,6 +450,9 @@ function setupStatusBar(ctx: vscode.ExtensionContext): void {
   modeStatusBarItem.tooltip = "Memory Bank Mode (click to change)";
   modeStatusBarItem.command = "memoryBank.selectMode";
   modeStatusBarItem.show();
+  
+  // Add to both the extension context and our disposable store
+  store.add(modeStatusBarItem);
   ctx.subscriptions.push(modeStatusBarItem);
 }
 
@@ -295,27 +501,62 @@ async function initializeMemoryBank(ws: vscode.WorkspaceFolder, ctx?: vscode.Ext
  * This method is called when your extension is deactivated.
  */
 export function deactivate(): void {
-  // Log deactivation with stack trace and state
+  // Log deactivation with stack trace
   console.log('[Memory Bank] Deactivation called. Stack:', new Error().stack);
-  console.log('[Memory Bank] State at deactivation:', {
-    memoryManager,
-    modeManager,
-    copilotIntegration,
-    chatModeProvider: (ChatModeProvider as any).instance
-  });
-  // Clean up file watchers
-  if (memoryManager) {
-    memoryManager.stopWatching();
+  
+  try {
+    console.log('[Memory Bank] Beginning controlled deactivation sequence...');
+    
+    // First, deactivate Copilot integration to stop any active processes
+    if (copilotIntegration) {
+      console.log('[Memory Bank] Deactivating Copilot integration...');
+      copilotIntegration.deactivate();
+      copilotIntegration = undefined;
+    }
+    
+    // Next, dispose ChatModeProvider before MemoryManager
+    try {
+      const chatModeProvider = ChatModeProvider.getInstance();
+      if (chatModeProvider) {
+        console.log('[Memory Bank] Disposing ChatModeProvider...');
+        chatModeProvider.dispose();
+      }
+    } catch (err) {
+      console.error('[Memory Bank] Error disposing ChatModeProvider:', err);
+    }
+    
+    // Clean up memory manager and file watchers
+    try {
+      if (memoryManager) {
+        console.log('[Memory Bank] Stopping file watchers...');
+        memoryManager.stopWatching();
+        memoryManager = undefined;
+      }
+    } catch (err) {
+      console.error('[Memory Bank] Error stopping file watchers:', err);
+    }
+    
+    // Clear mode manager reference
+    modeManager = undefined;
+    
+    // Clear status bar
+    if (modeStatusBarItem) {
+      try {
+        modeStatusBarItem.dispose();
+      } catch (err) {
+        console.error('[Memory Bank] Error disposing status bar item:', err);
+      }
+      modeStatusBarItem = undefined;
+    }
+    
+    // Finally, dispose all remaining disposables in the store
+    console.log('[Memory Bank] Disposing remaining resources...');
+    if (disposables && !disposables.isDisposed) {
+      disposables.dispose();
+    }
+    
+    console.log('[Memory Bank] Extension successfully deactivated');
+  } catch (error) {
+    console.error('[Memory Bank] Error during deactivation:', error);
   }
-  // Deactivate Copilot integration
-  if (copilotIntegration) {
-    copilotIntegration.deactivate();
-  }
-  // Dispose ChatModeProvider singleton
-  const chatModeProvider = (ChatModeProvider as any).instance as ChatModeProvider | undefined;
-  if (chatModeProvider && typeof chatModeProvider.dispose === 'function') {
-    chatModeProvider.dispose();
-  }
-  (ChatModeProvider as any).instance = undefined;
-  console.log('Memory Bank extension deactivated');
 }

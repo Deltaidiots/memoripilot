@@ -31,6 +31,8 @@ Before you begin:
    - Press F5 in VS Code to launch the Extension Development Host
    - In the new window, open a workspace and test the extension
 
+5. Read the [DEVELOPMENT.md](./DEVELOPMENT.md) file for technical details about the project architecture and best practices.
+
 ## Making Changes
 
 1. Create a branch for your feature or fix:
@@ -119,9 +121,11 @@ When writing tests:
 ## Documentation
 
 - Update the README.md as necessary
+- Maintain technical documentation in DEVELOPMENT.md
 - Document public APIs and interfaces
 - Add JSDoc comments to functions
-- Create or update relevant markdown files in the project root
+- Follow the resource management patterns described in DEVELOPMENT.md
+- When implementing new tools, document their purpose and parameters
 
 ## Questions?
 

@@ -59,23 +59,32 @@ export class ChatModeProvider implements IChatModeProvider {
      * @param context The extension context
      */
     public async initialize(memoryManager: MemoryManager, context: vscode.ExtensionContext): Promise<void> {
-        if (this._disposed) { throw new Error('ChatModeProvider is disposed'); }
+        if (this._disposed) { 
+            console.error('ChatModeProvider: Attempted to initialize a disposed provider');
+            throw new Error('ChatModeProvider is disposed'); 
+        }
         if (this.initialized) {
+            console.log('ChatModeProvider: Already initialized, skipping');
             return;
         }
 
         console.log('ChatModeProvider: Initializing...');
         this.memoryManager = memoryManager;
         this.extensionContext = context;
+        
+        try {
+            // Ensure all mode templates exist
+            await this.ensureAllModeTemplates();
 
-        // Ensure all mode templates exist
-        await this.ensureAllModeTemplates();
-
-        // Register chat participants and set up file watchers
-        await this.registerParticipants();
-        this.setupWatchers();
-        this.initialized = true;
-        console.log('ChatModeProvider: Initialization complete');
+            // Register chat participants and set up file watchers
+            await this.registerParticipants();
+            this.setupWatchers();
+            this.initialized = true;
+            console.log('ChatModeProvider: Initialization complete');
+        } catch (err) {
+            console.error('ChatModeProvider: Initialization failed:', err);
+            throw err;
+        }
     }
 
     /**
@@ -299,52 +308,139 @@ export class ChatModeProvider implements IChatModeProvider {
     }
 
     /**
-     * Ensure a mode template exists, creating it with a default if missing
+     * Ensure a mode template exists and is up-to-date, creating or updating it if needed
+     * @param mode The mode name
+     * @param forceUpdate Whether to force update the template even if it's not newer
+     * @returns Object containing update status information
      */
-    private async ensureModeTemplate(mode: string): Promise<void> {
+    private async ensureModeTemplate(mode: string, forceUpdate: boolean = false): Promise<{
+        updated: boolean;
+        backupCreated: boolean;
+        templatePath: string;
+        backupPath?: string;
+        fromVersion?: string;
+        toVersion?: string;
+    }> {
         const chatmodesDir = getWorkspaceChatmodesDir();
-        if (!chatmodesDir) { return; }
+        if (!chatmodesDir) {
+            return {
+                updated: false,
+                backupCreated: false,
+                templatePath: ''
+            };
+        }
+        
         if (!fs.existsSync(chatmodesDir)) {
             fs.mkdirSync(chatmodesDir, { recursive: true });
         }
+        
         const templatePath = path.join(chatmodesDir, `${mode}.chatmode.md`);
-        try {
-            await fs.promises.access(templatePath, fs.constants.F_OK);
-        } catch {
-            // Try to copy from /resources/chat-modes/{mode}.md if it exists
-            let content: string | undefined;
-            try {
-                const extensionUri = this.extensionContext?.extensionUri;
-                if (extensionUri) {
-                    const resourcePath = path.join(
-                        extensionUri.fsPath,
-                        'resources',
-                        'chat-modes',
-                        `${mode}.md`
-                    );
-                    if (fs.existsSync(resourcePath)) {
-                        content = await fs.promises.readFile(resourcePath, 'utf8');
+        let shouldUpdate = false;
+        let backupCreated = false;
+        let fromVersion: string | undefined;
+        let backupPath: string | undefined;
+        
+        // Get bundled template and its version
+        const bundledTemplate = await this.getBundledTemplate(mode);
+        const bundledVersion = this.extractTemplateVersion(bundledTemplate);
+        
+        // Check if workspace template exists and get its version
+        if (fs.existsSync(templatePath)) {
+            if (forceUpdate) {
+                shouldUpdate = true;
+                console.log(`ChatModeProvider: Force updating template for mode '${mode}'`);
+            } else {
+                try {
+                    const workspaceTemplate = await fs.promises.readFile(templatePath, 'utf8');
+                    fromVersion = this.extractTemplateVersion(workspaceTemplate);
+                    
+                    // Compare versions and decide if update is needed
+                    if (this.isVersionNewer(bundledVersion, fromVersion)) {
+                        shouldUpdate = true;
+                        console.log(`ChatModeProvider: Template for mode '${mode}' is outdated (${fromVersion} -> ${bundledVersion}). Updating...`);
                     }
+                } catch (err) {
+                    console.error(`ChatModeProvider: Error checking template version for ${mode}:`, err);
+                    shouldUpdate = true; // In case of error, update to be safe
                 }
-            } catch (err) {
-                // Ignore, fallback to default
             }
-            if (!content) {
-                content = DEFAULT_MODE_TEMPLATES[mode] || `---\ndescription: ${mode} mode\ntools: []\n---\n# ${mode.charAt(0).toUpperCase() + mode.slice(1)} Mode\nDefault template.`;
-            }
-            await fs.promises.writeFile(templatePath, content, 'utf8');
-            console.log(`ChatModeProvider: Created template for mode '${mode}' at ${templatePath}`);
+        } else {
+            // Template doesn't exist, create it
+            shouldUpdate = true;
         }
+        
+        // Update or create the template if needed
+        if (shouldUpdate) {
+            try {
+                // If the file exists and we're updating it, create a backup
+                if (fs.existsSync(templatePath)) {
+                    backupPath = `${templatePath}.backup`;
+                    await fs.promises.copyFile(templatePath, backupPath);
+                    backupCreated = true;
+                    console.log(`ChatModeProvider: Created backup of template at ${backupPath}`);
+                }
+                
+                await fs.promises.writeFile(templatePath, bundledTemplate, 'utf8');
+                console.log(`ChatModeProvider: ${fs.existsSync(templatePath) ? 'Updated' : 'Created'} template for mode '${mode}' at ${templatePath}`);
+                
+                return {
+                    updated: true,
+                    backupCreated,
+                    templatePath,
+                    backupPath,
+                    fromVersion,
+                    toVersion: bundledVersion
+                };
+            } catch (err) {
+                console.error(`ChatModeProvider: Failed to ${fs.existsSync(templatePath) ? 'update' : 'create'} template for ${mode}:`, err);
+                return {
+                    updated: false,
+                    backupCreated,
+                    templatePath,
+                    backupPath,
+                    fromVersion,
+                    toVersion: bundledVersion
+                };
+            }
+        }
+        
+        return {
+            updated: false,
+            backupCreated: false,
+            templatePath
+        };
     }
 
     /**
-     * Ensure all core mode templates exist
+     * Ensure all core mode templates exist and are up-to-date
+     * @param forceUpdate Whether to force update all templates
+     * @returns Summary of template updates
      */
-    private async ensureAllModeTemplates(): Promise<void> {
+    private async ensureAllModeTemplates(forceUpdate: boolean = false): Promise<{
+        updated: string[],
+        skipped: string[],
+        backups: string[]
+    }> {
         const modes = ['ask', 'architect', 'code', 'debug'];
+        const results = {
+            updated: [] as string[],
+            skipped: [] as string[],
+            backups: [] as string[]
+        };
+        
         for (const mode of modes) {
-            await this.ensureModeTemplate(mode);
+            const result = await this.ensureModeTemplate(mode, forceUpdate);
+            if (result.updated) {
+                results.updated.push(`${mode}.chatmode.md`);
+            } else {
+                results.skipped.push(`${mode}.chatmode.md`);
+            }
+            if (result.backupCreated) {
+                results.backups.push(`${mode}.chatmode.md.backup`);
+            }
         }
+        
+        return results;
     }
 
     /**
@@ -364,21 +460,97 @@ export class ChatModeProvider implements IChatModeProvider {
     }
 
     /**
+     * Extract version from a template's frontmatter
+     * @param template The template content
+     * @returns The version string or "0.0.0" if not found
+     */
+    private extractTemplateVersion(template: string): string {
+        const match = /---[\s\S]*?version:\s*["']?([\d\.]+)["']?[\s\S]*?---/.exec(template);
+        return match ? match[1] : '0.0.0';
+    }
+
+    /**
+     * Compare two semantic version strings
+     * @param newVersion The new version
+     * @param oldVersion The old version
+     * @returns True if newVersion is newer than oldVersion
+     */
+    private isVersionNewer(newVersion: string, oldVersion: string): boolean {
+        // Simple semantic version comparison
+        const newParts = newVersion.split('.').map(Number);
+        const oldParts = oldVersion.split('.').map(Number);
+        
+    for (let i = 0; i < Math.max(newParts.length, oldParts.length); i++) {
+        const newPart = newParts[i] || 0;
+        const oldPart = oldParts[i] || 0;
+        
+        if (newPart > oldPart) {
+            return true;
+        }
+        if (newPart < oldPart) {
+            return false;
+        }
+    }
+        
+        return false; // Versions are equal
+    }
+
+    /**
+     * Get the bundled template content from resources directory
+     * @param mode The mode name
+     * @returns The template content or undefined if not found
+     */
+    private async getBundledTemplate(mode: string): Promise<string> {
+        try {
+            const extensionUri = this.extensionContext?.extensionUri;
+            if (extensionUri) {
+                const resourcePath = path.join(
+                    extensionUri.fsPath,
+                    'resources',
+                    'chat-modes',
+                    `${mode}.md`
+                );
+                if (fs.existsSync(resourcePath)) {
+                    return await fs.promises.readFile(resourcePath, 'utf8');
+                }
+            }
+        } catch (err) {
+            console.error(`ChatModeProvider: Failed to load bundled template for ${mode}:`, err);
+        }
+        
+        // Fallback to default template
+        return DEFAULT_MODE_TEMPLATES[mode] || `---\ndescription: ${mode} mode\ntools: []\nversion: "1.0.0"\n---\n# ${mode.charAt(0).toUpperCase() + mode.slice(1)} Mode\nDefault template.`;
+    }
+
+    /**
      * Dispose all resources (file watchers, participants, etc.)
      */
     public dispose(): void {
         if (this._disposed) { return; }
+        console.log('ChatModeProvider: Disposing resources...');
+        
+        // Dispose all participants
         for (const info of this.participants) {
             if (info.disposal && typeof info.disposal.dispose === 'function') {
-                try { info.disposal.dispose(); } catch {}
+                try { 
+                    console.log(`ChatModeProvider: Disposing participant ${info.id}`);
+                    info.disposal.dispose(); 
+                } catch (err) {
+                    console.error(`ChatModeProvider: Error disposing participant ${info.id}:`, err);
+                }
             }
         }
+        
+        // Clear all references
         this.participants = [];
         this.memoryManager = undefined;
         this.extensionContext = undefined;
         this.initialized = false;
         this._disposed = true;
-        ChatModeProvider.instance = null; // now valid
+        
+        // Set instance to null after fully disposing all resources
+        console.log('ChatModeProvider: Successfully disposed all resources');
+        ChatModeProvider.instance = null;
     }
 
     public registerMode(modeId: string): void {
@@ -388,13 +560,83 @@ export class ChatModeProvider implements IChatModeProvider {
     public getRegisteredModes(): readonly string[] {
       return Array.from(this.registeredModes);
     }
+
+    /**
+     * Refresh all chat mode templates with the latest versions from the extension
+     * @param forceUpdate Whether to force update all templates even if they're not outdated
+     * @returns Promise that resolves with summary of updates when all templates are refreshed
+     */
+    public async refreshTemplates(forceUpdate: boolean = false): Promise<{
+        updated: string[],
+        skipped: string[],
+        backups: string[]
+    }> {
+        if (this._disposed) { throw new Error('ChatModeProvider is disposed'); }
+        if (!this.initialized) {
+            throw new Error('ChatModeProvider not initialized');
+        }
+        
+        console.log(`ChatModeProvider: Refreshing templates (forceUpdate=${forceUpdate})`);
+        const updateResults = await this.ensureAllModeTemplates(forceUpdate);
+        
+        // Refresh participants with new templates
+        await this.refreshParticipants();
+        console.log('ChatModeProvider: Templates refreshed');
+        
+        return updateResults;
+    }
+
+    /**
+     * Check if any chat mode templates have updates available
+     * @returns Promise that resolves to true if any templates have updates available
+     */
+    public async checkForTemplateUpdates(): Promise<boolean> {
+        if (this._disposed) { throw new Error('ChatModeProvider is disposed'); }
+        if (!this.initialized) {
+            throw new Error('ChatModeProvider not initialized');
+        }
+        
+        const modes = ['ask', 'architect', 'code', 'debug'];
+        const chatmodesDir = getWorkspaceChatmodesDir();
+        if (!chatmodesDir) { return false; }
+        
+        for (const mode of modes) {
+            const templatePath = path.join(chatmodesDir, `${mode}.chatmode.md`);
+            
+            // If template doesn't exist, it needs to be created
+            if (!fs.existsSync(templatePath)) {
+                return true;
+            }
+            
+            try {
+                // Get bundled template version
+                const bundledTemplate = await this.getBundledTemplate(mode);
+                const bundledVersion = this.extractTemplateVersion(bundledTemplate);
+                
+                // Get workspace template version
+                const workspaceTemplate = await fs.promises.readFile(templatePath, 'utf8');
+                const workspaceVersion = this.extractTemplateVersion(workspaceTemplate);
+                
+                // If bundled version is newer, update is needed
+                if (this.isVersionNewer(bundledVersion, workspaceVersion)) {
+                    return true;
+                }
+            } catch (err) {
+                console.error(`ChatModeProvider: Error checking template version for ${mode}:`, err);
+                // Consider an error as needing an update to be safe
+                return true;
+            }
+        }
+        
+        return false; // No updates needed
+    }
 }
 
 const DEFAULT_MODE_TEMPLATES: Record<string, string> = {
-    ask: `---\ndescription: Ask mode is optimized for answering questions about your codebase, coding, and general technology concepts.\ntools: ['codebase', 'search', 'usages']\n---\n# Ask Mode\nYou are in ask mode. Answer questions about the project using the context below.\n\n---\n### Product Context\n{{memory-bank/productContext.md}}\n---`,
-    architect: `---\ndescription: System architecture and design.\ntools: ['codebase', 'search', 'usages']\n---\n# Architect Mode\nYou are an expert system architect.\n\n---\n### Product Context\n{{memory-bank/productContext.md}}\n---`,
-    code: `---\ndescription: Code implementation and review.\ntools: ['codebase', 'search', 'usages']\n---\n# Code Mode\nYou are an expert programmer.\n\n---\n### Active Context\n{{memory-bank/activeContext.md}}\n---`,
-    debug: `---\ndescription: Debugging and troubleshooting.\ntools: ['codebase', 'search', 'usages']\n---\n# Debug Mode\nYou are a debugging expert.\n\n---\n### Active Context\n{{memory-bank/activeContext.md}}\n---`
+    ask: `---\ndescription: Ask mode is optimized for answering questions about your codebase, coding, and general technology concepts.\ntools: ['codebase', 'search', 'usages']\nversion: "1.0.0"\n---\n# Ask Mode\nYou are in ask mode. Answer questions about the project using the context below.\n\n---\n### Product Context\n{{memory-bank/productContext.md}}\n---`,
+    architect: `---\ndescription: System architecture and design.\ntools: ['codebase', 'search', 'usages']\nversion: "1.0.0"\n---\n# Architect Mode\nYou are an expert system architect.\n\n---\n### Product Context\n{{memory-bank/productContext.md}}\n---`,
+    code: `---\ndescription: Code implementation and review.\ntools: ['codebase', 'search', 'usages']\nversion: "1.0.0"\n---\n# Code Mode\nYou are an expert programmer.\n\n---\n### Active Context\n{{memory-bank/activeContext.md}}\n---`,
+    debug: `---\ndescription: Debugging and troubleshooting.\ntools: ['codebase', 'search', 'usages']\nversion: "1.0.0"\n---\n# Debug Mode\nYou are a debugging expert.\n\n---\n### Active Context\n{{memory-bank/activeContext.md}}\n---`
 };
 
 function getWorkspaceChatmodesDir(): string | undefined {

@@ -2,7 +2,7 @@
   "name": "memoripilot",
   "displayName": "MemoriPilot",
   "description": "Project memory for Copilot - Supercharge Copilot with persistent context awareness that remembers decisions, tracks progress, and provides consistent project knowledge",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "publisher": "gujjar19",
   "author": {
     "name": "Asad Hayat"
@@ -48,8 +48,11 @@
     "onLanguageModelTool:memory_bank_log_decision",
     "onLanguageModelTool:memory_bank_update_progress",
     "onLanguageModelTool:memory_bank_show_memory",
-    "onLanguageModelTool:memory_bank_update_all",
     "onLanguageModelTool:memory_bank_switch_mode",
+    "onLanguageModelTool:memory_bank_update_product_context",
+    "onLanguageModelTool:memory_bank_update_system_patterns",
+    "onLanguageModelTool:memory_bank_update_project_brief",
+    "onLanguageModelTool:memory_bank_update_architect",
     "onStartupFinished"
   ],
   "main": "./dist/extension.js",
@@ -175,12 +178,12 @@
         }
       },
       {
-        "name": "memory_bank_update_all",
-        "displayName": "Update Memory Bank",
+        "name": "memory_bank_update_all_disabled",
+        "displayName": "Update Memory Bank (Disabled)",
         "toolReferenceName": "updateMemoryBank",
-        "modelDescription": "Analyzes the current workspace and updates relevant memory bank files based on recent changes, new files, and project state. Use this when the user wants to sync their memory bank with current project state.",
-        "userDescription": "Update memory bank based on current workspace",
-        "canBeReferencedInPrompt": true,
+        "modelDescription": "This tool has been temporarily disabled as it's not ready yet.",
+        "userDescription": "This tool is currently disabled",
+        "canBeReferencedInPrompt": false,
         "icon": "$(sync)",
         "inputSchema": {
           "type": "object",
@@ -213,6 +216,171 @@
             "mode"
           ]
         }
+      },
+      {
+        "name": "memory_bank_update_product_context",
+        "displayName": "Update Product Context",
+        "toolReferenceName": "updateProductContext",
+        "modelDescription": "Updates the product context file with detailed information about the project's architecture, technologies, and libraries. Use this when significant project details or dependencies change.",
+        "userDescription": "Update product context with project details",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(package)",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "description": {
+              "type": "string",
+              "description": "A description of what the project does"
+            },
+            "architecture": {
+              "type": "string",
+              "description": "Description of the project's architecture"
+            },
+            "technologies": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "List of technologies used in the project"
+            },
+            "libraries": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "List of libraries and dependencies used in the project"
+            }
+          }
+        }
+      },
+      {
+        "name": "memory_bank_update_system_patterns",
+        "displayName": "Update System Patterns",
+        "toolReferenceName": "updateSystemPatterns",
+        "modelDescription": "Updates the system patterns file with architectural patterns, design patterns, and coding conventions identified in the project. Use this when new patterns emerge or existing ones evolve.",
+        "userDescription": "Document system patterns and conventions",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(symbol-structure)",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "pattern": {
+              "type": "string",
+              "description": "The name of the pattern or convention"
+            },
+            "description": {
+              "type": "string",
+              "description": "Detailed explanation of the pattern and its purpose"
+            },
+            "examples": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Examples of where the pattern is used in the codebase"
+            }
+          },
+          "required": [
+            "pattern",
+            "description"
+          ]
+        }
+      },
+      {
+        "name": "memory_bank_update_project_brief",
+        "displayName": "Update Project Brief",
+        "toolReferenceName": "updateProjectBrief",
+        "modelDescription": "Updates the project brief with high-level information about the project's purpose, goals, and constraints. Use this when project scope or objectives change.",
+        "userDescription": "Update the high-level project brief",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(project)",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "description": "The title of the project"
+            },
+            "summary": {
+              "type": "string",
+              "description": "A brief summary of what the project does"
+            },
+            "goals": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The main goals of the project"
+            },
+            "constraints": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Any constraints or limitations of the project"
+            },
+            "stakeholders": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "People or groups interested in the project"
+            }
+          }
+        }
+      },
+      {
+        "name": "memory_bank_update_architect",
+        "displayName": "Update Architect Document",
+        "toolReferenceName": "updateArchitect",
+        "modelDescription": "Updates the architect document with architectural decisions, considerations, and component designs. Use this when making significant architectural changes.",
+        "userDescription": "Document architectural decisions and component designs",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(debug-stackframe-dot)",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "decisions": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Architectural decisions made"
+            },
+            "considerations": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Important design considerations"
+            },
+            "components": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Component name"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Component description"
+                  },
+                  "responsibilities": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Component responsibilities"
+                  }
+                },
+                "required": ["name", "description"]
+              },
+              "description": "Components in the system architecture"
+            }
+          }
+        }
       }
     ],
     "chatParticipants": [
@@ -243,6 +411,10 @@
       {
         "command": "memoryBank.processCommand",
         "title": "Memory Bank: Run Command"
+      },
+      {
+        "command": "memoryBank.refreshTemplates",
+        "title": "Memory Bank: Refresh Chat Mode Templates"
       }
     ]
   },
