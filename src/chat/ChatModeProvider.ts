@@ -14,6 +14,7 @@ interface ParticipantInfo {
 
 /**
  * Manages Chat Participants based on templates in the resources/chat-modes directory
+ * which are installed to the .github directory in the workspace
  */
 export interface IChatModeProvider {
   getRegisteredModes(): readonly string[];
@@ -651,6 +652,6 @@ function getWorkspaceChatmodesDir(): string | undefined {
             ? locations[0]
             : path.join(workspaceFolders[0].uri.fsPath, locations[0]);
     }
-    // Default to .github/chatmodes in the first workspace
-    return path.join(workspaceFolders[0].uri.fsPath, '.github', 'chatmodes');
+    // Default to .github folder in the first workspace
+    return path.join(workspaceFolders[0].uri.fsPath, '.github');
 }
